@@ -4,6 +4,8 @@ import pandas as pd
 import subprocess
 from data_processor.parse_darshan_txt import parse_darshan_txt
 import re
+import argparse
+
 
 IOSENSE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -18,16 +20,24 @@ def load_cluster_config(path):
     print("Cluster configuration loaded.")
     return config
 
-def load_darshan_trace_from_dir(dir_path, config_name):
+def load_darshan_trace_from_dir(dir_path, config_name, run_txt):
     print(f"Loading Darshan traces from {dir_path} for config {config_name}...")
     traces = []
     for file in os.listdir(dir_path):
-        if file.endswith('.darshan') and config_name in file:
-            print(f"Processing file: {file}")
-            darshan_txt = subprocess.check_output(["darshan-dxt-parser", "--show-incomplete", os.path.join(dir_path, file)])
-            darshan_txt = darshan_txt.decode('utf-8')
-            trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt)
-            traces.append(trace_df)
+        if not run_txt:
+            if file.endswith('.darshan') and config_name in file:
+                print(f"Processing file: {file}")
+                darshan_txt = subprocess.check_output(["darshan-dxt-parser", "--show-incomplete", os.path.join(dir_path, file)])
+                darshan_txt = darshan_txt.decode('utf-8')
+                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt)
+                traces.append(trace_df)
+        else:
+            if file.endswith('.txt') and config_name in file:
+                print(f"Processing file: {file}")
+                with open(os.path.join(dir_path, file), 'r') as f:
+                    trace_txt = f.read()
+                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(trace_txt)
+                traces.append(trace_df)
     if traces:
         darshan_df = pd.concat(traces)
         darshan_df = darshan_df.sort_values(by=['start'])
@@ -116,7 +126,7 @@ def load_stats_from_dir(dir_path):
             
 
 
-def get_data(model_config):
+def get_data(model_config, run_txt):
     print("Getting data based on model configuration...")
     data = {'baseline_traces': {}, 'interference_traces': {}}
     data_types = ['darshan_logs', 'stats']
@@ -136,7 +146,7 @@ def get_data(model_config):
                     if config_name not in configs:
                         configs.append(config_name)
                 for config in configs:
-                    trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level), config)
+                    trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level), config, run_txt)
                     if interference_level_num == 0:
                         data['baseline_traces'][config] = trace_df
                     else:
@@ -262,12 +272,15 @@ def save_samples(samples, output_file):
     print("Samples saved.")
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--run_txt', action='store_true', help='Run the script with txt files instead of darshan files')
+    args = parser.parse_args()
     print("Starting main process...")
     model_config = load_model_config()
     cluster_config = load_cluster_config(os.path.join(IOSENSE_ROOT, 'client', model_config['cluster_config']))
     model_config['cluster_config'] = cluster_config
     print("Model and cluster configurations loaded.")
-    data = get_data(model_config)
+    data = get_data(model_config, args.run_txt)
     samples = create_samples(data, 0.2)
     save_samples(samples, os.path.join(IOSENSE_ROOT, model_config['output_dir'], model_config['workload'], model_config['time_stamp_dir'], 'all_samples.json'))
     print("Main process complete.")
