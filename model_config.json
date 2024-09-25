@@ -1,6 +1,6 @@
 {
     "cluster_config": "cluster_config.json",
     "workload": "io500",
-    "time_stamp_dir": "",
-    "output_dir": "../processed_data"
+    "time_stamp_dir": "2024-09-25_11-47-42",
+    "output_dir": "processed_data"
 }
