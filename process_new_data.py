@@ -141,11 +141,12 @@ def get_data(model_config, run_txt):
                 interference_level_files = os.listdir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level))
                 configs = []
                 for file in interference_level_files:
-                    # file will be in format configname_idx.darshan like debug_config_0.darshan
-                    print(f"Processing file: {file}")
-                    config_name = re.match(r'(.*?)_[0-9].darshan', file).group(1)
-                    if config_name not in configs:
-                        configs.append(config_name)
+                    if file.endswith('.darshan'):
+                        # file will be in format configname_idx.darshan like debug_config_0.darshan
+                        print(f"Processing file: {file}")
+                        config_name = re.match(r'(.*?)_[0-9].darshan', file).group(1)
+                        if config_name not in configs:
+                            configs.append(config_name)
                 for config in configs:
                     trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level), config, run_txt)
                     if interference_level_num == 0:
