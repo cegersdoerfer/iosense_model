@@ -111,6 +111,7 @@ def load_stats_from_dir(dir_path):
                     # dirs will be in fsname_[MDT|OST][xxxx].log, like hasanfs-MDT0000.log, extract MDT or OST and the number in xxxx
                     match = re.match(r'.*?-(MDT[0-9]+|OST[0-9]+)\.log', subdir)
                     if match:
+                        print(f"match: {match}")
                         id = match.group(1)
                         print(f"Processing subdir: {subdir}, ID: {id}")
                         if id not in stats:
