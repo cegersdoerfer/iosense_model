@@ -75,7 +75,7 @@ def process_stats_file(file_path):
             data['device_name'].append(line[4])
             start_index = 4
             for column_idx, column in enumerate(columns[start_index:]):
-                shifted_column_idx = column_idx + start_index
+                shifted_column_idx = column_idx + start_index + 1
                 if line_idx == 0:
                     data[column].append(int(line[shifted_column_idx]))
                 else:
