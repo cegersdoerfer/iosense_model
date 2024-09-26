@@ -74,21 +74,24 @@ def process_stats_file(file_path):
             data['major'].append(line[2])
             data['minor'].append(line[3])
             data['device_name'].append(line[4])
-            for column_idx, column in enumerate(columns[5:]):
+            start_index = 5
+            for column_idx, column in enumerate(columns[start_index:]):
+                shifted_column_idx = column_idx + start_index
                 if line_idx == 0:
                     first_line = line
-                    data[column].append(line[column_idx])
+                    data[column].append(line[shifted_column_idx])
                 else:
                     # for in_flight, do not calculate difference
                     if column == 'in_flight':
-                        data[column].append(int(line[column_idx]))
+                        data[column].append(int(line[shifted_column_idx]))
                     else:
-                        if int(line[column_idx]) < int(data[column][line_idx - 1]):
-                            data[column].append(int(line[column_idx]) + (2**32 - int(data[column][line_idx - 1])))
+                        if int(line[shifted_column_idx]) < int(data[column][line_idx - 1]):
+                            data[column].append(int(line[shifted_column_idx]) + (2**32 - int(data[column][line_idx - 1])))
                         else:
-                            data[column].append(int(line[column_idx]) - int(data[column][line_idx - 1]))
-        for column_idx, column in enumerate(columns[5:]):
-            data[column][0] = int(first_line[column_idx])
+                            data[column].append(int(line[shifted_column_idx]) - int(data[column][line_idx - 1]))
+        for column_idx, column in enumerate(columns[start_index:]):
+            shifted_column_idx = column_idx + start_index
+            data[column][0] = int(first_line[shifted_column_idx])
     df = pd.DataFrame(data)
     df['time_stamp'] = pd.to_datetime(df['time_stamp'], format='%Y-%m-%d %H:%M:%S.%f')
     df.sort_values(by=['time_stamp'], inplace=True)
