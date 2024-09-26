@@ -1,6 +1,7 @@
 import json
 import os
 import pandas as pd
+import numpy as np
 import subprocess
 from data_processor.parse_darshan_txt import parse_darshan_txt
 import re
@@ -285,6 +286,23 @@ def create_samples(data, time_window_size):
     return samples
 
 def save_samples(samples, output_file):
+    # Convert numpy types to native Python types
+    def convert_numpy_types(obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, pd.Timestamp):
+            return obj.isoformat()
+        elif isinstance(obj, pd.Timedelta):
+            return str(obj)
+        else:
+            return obj
+
+    # Recursively convert all elements in the samples list
+    samples = json.loads(json.dumps(samples, default=convert_numpy_types))
 
     # create output dir if it doesn't exist
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
