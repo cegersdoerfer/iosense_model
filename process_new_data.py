@@ -2,24 +2,14 @@ import json
 import os
 import pandas as pd
 import numpy as np
+import random
 import subprocess
 from data_processor.parse_darshan_txt import parse_darshan_txt
 import re
 import argparse
+from utils.config import load_cluster_config, IOSENSE_ROOT, load_data_config
 
 
-IOSENSE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-def load_model_config():
-    with open(os.path.join(IOSENSE_ROOT,'iosense_model','model_config.json'), 'r') as f:
-        return json.load(f)
-
-def load_cluster_config(path):
-    print(f"Loading cluster configuration from {path}...")
-    with open(path, 'r') as f:
-        config = json.load(f)
-    print("Cluster configuration loaded.")
-    return config
 
 def load_darshan_trace_from_dir(dir_path, config_name, run_txt):
     print(f"Loading Darshan traces from {dir_path} for config {config_name}...")
@@ -249,9 +239,10 @@ def calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window,
     }
     return sample
 
-def create_samples(data, time_window_size):
+def create_samples(data, time_window_size, test_size):
     print(f"Creating samples with time window size: {time_window_size}")
-    samples = []
+    train_samples = []
+    test_samples = []
     # minimum size is 0.2 seconds
     if time_window_size < 0.2:
         # throw error
@@ -280,9 +271,12 @@ def create_samples(data, time_window_size):
                 for device in data['stats']:
                     stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
                 sample = calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size)
-                samples.append(sample)
+                if random.random() < test_size:
+                    test_samples.append(sample)
+                else:
+                    train_samples.append(sample)
     print("Sample creation complete.")
-    return samples
+    return train_samples, test_samples
 
 def save_samples(samples, output_file):
     # Convert numpy types to native Python types
@@ -315,13 +309,16 @@ def main():
     parser.add_argument('--run_txt', action='store_true', help='Run the script with txt files instead of darshan files')
     args = parser.parse_args()
     print("Starting main process...")
-    model_config = load_model_config()
-    cluster_config = load_cluster_config(os.path.join(IOSENSE_ROOT, 'client', model_config['cluster_config']))
-    model_config['cluster_config'] = cluster_config
-    print("Model and cluster configurations loaded.")
-    data = get_data(model_config, args.run_txt)
-    samples = create_samples(data, 0.2)
-    save_samples(samples, os.path.join(IOSENSE_ROOT, model_config['output_dir'], model_config['workload'], model_config['time_stamp_dir'], 'all_samples.json'))
+    data_config = load_data_config()
+    data_config['cluster_config'] = load_cluster_config()
+    window_sizes = data_config['window_sizes']
+    for window_size in window_sizes:
+        data_config['time_window_size'] = window_size
+        print(f"Processing window size: {window_size}")
+        data = get_data(data_config, args.run_txt)
+        train_samples, test_samples = create_samples(data, window_size, data_config['test_size'])
+        save_samples(train_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], data_config['time_stamp_dir'], f'train_samples_{window_size}.json'))
+        save_samples(test_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], data_config['time_stamp_dir'], f'test_samples_{window_size}.json'))
     print("Main process complete.")
 
 if __name__ == "__main__":
