@@ -265,8 +265,8 @@ def create_samples(data, time_window_size):
             trace_end_time = trace_df['end'].max()
             num_windows = int((trace_end_time - trace_start_time) / time_window_size)
             for i in range(num_windows):
-                start_time = trace_start_time + i * time_window_size
-                end_time = trace_start_time + (i + 1) * time_window_size
+                start_time = trace_start_time + pd.Timedelta(seconds=i * time_window_size)
+                end_time = trace_start_time + pd.Timedelta(seconds=(i + 1) * time_window_size)
                 trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
                 if len(trace_df_window) == 0:
                     continue
