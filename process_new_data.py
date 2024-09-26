@@ -261,9 +261,9 @@ def create_samples(data, time_window_size):
         for config in data['interference_traces'][interference_level]:
             trace_df = data['interference_traces'][interference_level][config]
             baseline_trace_df = data['baseline_traces'][config]
-            trace_start_time = trace_df['start'].min()
-            trace_end_time = trace_df['end'].max()
-            num_windows = int((trace_end_time - trace_start_time) / time_window_size)
+            trace_start_time = pd.to_datetime(trace_df['start'].min(), unit='s')
+            trace_end_time = pd.to_datetime(trace_df['end'].max(), unit='s')
+            num_windows = int((trace_end_time - trace_start_time) / pd.Timedelta(seconds=time_window_size))
             for i in range(num_windows):
                 start_time = trace_start_time + pd.Timedelta(seconds=i * time_window_size)
                 end_time = trace_start_time + pd.Timedelta(seconds=(i + 1) * time_window_size)
