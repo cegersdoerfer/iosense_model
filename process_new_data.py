@@ -104,9 +104,6 @@ def load_stats_from_dir(dir_path):
         if not os.path.isdir(os.path.join(dir_path, folder)):
             print(f"Skipping {folder} as it's not a directory")
             continue
-        if 'stats' not in folder:
-            print(f"Skipping {folder} as it doesn't contain 'stats'")
-            continue
         else:
             subdirs = os.listdir(os.path.join(dir_path, folder))
             print(f"Found {len(subdirs)} subdirectories in {folder}")
