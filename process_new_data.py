@@ -66,10 +66,10 @@ def process_stats_file(file_path):
     with open(file_path, 'r') as f:
         for line_idx, line in enumerate(f):
             line = line.strip()
-            print(f"Processing line: {line}")
             if line == '':
                 continue
             line = line.split()
+            print(f"Processing line: {line}")
             data['time_stamp'].append(line[0] + ' ' + line[1])
             data['major'].append(line[2])
             data['minor'].append(line[3])
