@@ -100,29 +100,42 @@ def load_stats_from_dir(dir_path):
     print(f"Loading stats from directory: {dir_path}")
     stats = {}
     for folder in os.listdir(dir_path):
+        print(f"Processing folder: {folder}")
         if not os.path.isdir(os.path.join(dir_path, folder)):
+            print(f"Skipping {folder} as it's not a directory")
             continue
         if 'stats' not in folder:
+            print(f"Skipping {folder} as it doesn't contain 'stats'")
             continue
         else:
             subdirs = os.listdir(os.path.join(dir_path, folder))
+            print(f"Found {len(subdirs)} subdirectories in {folder}")
             for subdir in subdirs:
                 if any([x in subdir for x in ['OST', 'MDT']]):
                     # dirs will be in fsname_[MDT|OST][xxxx].log, like hasanfs-MDT0000.log, extract MDT or OST and the number in xxxx
                     match = re.match(r'.*?-(MDT[0-9]+|OST[0-9]+)\.log', subdir)
                     if match:
-                        print(f"match: {match}")
+                        print(f"Found match: {match.group(0)}")
                         id = match.group(1)
                         print(f"Processing subdir: {subdir}, ID: {id}")
                         if id not in stats:
                             stats[id] = []
-                        stats[id].append(process_stats_file(os.path.join(dir_path, folder, subdir)))
+                            print(f"Created new list for {id}")
+                        file_path = os.path.join(dir_path, folder, subdir)
+                        print(f"Processing stats file: {file_path}")
+                        stats[id].append(process_stats_file(file_path))
+                        print(f"Processed stats file for {id}")
+                else:
+                    print(f"Skipping {subdir} as it doesn't match OST or MDT pattern")
+    print(f"Processing complete. Found data for {len(stats)} devices.")
     for id in stats:
+        print(f"Concatenating and sorting data for {id}")
         stats[id] = pd.concat(stats[id])
         stats[id]['time_stamp'] = pd.to_datetime(stats[id]['time_stamp'], format='%Y-%m-%d %H:%M:%S.%f')
         stats[id].sort_values(by=['time_stamp'], inplace=True)
         stats[id].reset_index(inplace=True)
-    print("Stats loaded and concatenated.")
+        print(f"Processed {len(stats[id])} rows for {id}")
+    print("Stats loaded, concatenated, and sorted.")
     return stats
             
 
