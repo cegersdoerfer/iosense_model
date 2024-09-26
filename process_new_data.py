@@ -261,12 +261,12 @@ def create_samples(data, time_window_size):
         for config in data['interference_traces'][interference_level]:
             trace_df = data['interference_traces'][interference_level][config]
             baseline_trace_df = data['baseline_traces'][config]
-            trace_start_time = pd.to_datetime(trace_df['start'].min(), unit='s')
-            trace_end_time = pd.to_datetime(trace_df['end'].max(), unit='s')
-            num_windows = int((trace_end_time - trace_start_time) / pd.Timedelta(seconds=time_window_size))
+            trace_start_time = trace_df['start'].min()
+            trace_end_time = trace_df['end'].max()
+            num_windows = int((trace_end_time - trace_start_time) / time_window_size)
             for i in range(num_windows):
-                start_time = trace_start_time + pd.Timedelta(seconds=i * time_window_size)
-                end_time = trace_start_time + pd.Timedelta(seconds=(i + 1) * time_window_size)
+                start_time = trace_start_time + i * time_window_size
+                end_time = trace_start_time + (i + 1) * time_window_size
                 trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
                 if len(trace_df_window) == 0:
                     continue
@@ -274,6 +274,9 @@ def create_samples(data, time_window_size):
                 baseline_trace_df_window = baseline_trace_df.iloc[trace_df_window.index[0]:trace_df_window.index[-1]+1]
                 # get the stats for the same time window
                 stats_df_window = {}
+                # convert start_time and end_time to pd.Timestamp
+                start_time = pd.Timestamp(start_time)
+                end_time = pd.Timestamp(end_time)
                 for device in data['stats']:
                     stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
                 sample = calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size)
