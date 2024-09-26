@@ -69,12 +69,11 @@ def process_stats_file(file_path):
             if line == '':
                 continue
             line = line.split()
-            print(f"Processing line: {line}")
             data['time_stamp'].append(line[0] + ' ' + line[1])
             data['major'].append(line[2])
             data['minor'].append(line[3])
             data['device_name'].append(line[4])
-            start_index = 5
+            start_index = 4
             for column_idx, column in enumerate(columns[start_index:]):
                 shifted_column_idx = column_idx + start_index
                 if line_idx == 0:
