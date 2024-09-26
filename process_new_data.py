@@ -78,8 +78,7 @@ def process_stats_file(file_path):
             for column_idx, column in enumerate(columns[start_index:]):
                 shifted_column_idx = column_idx + start_index
                 if line_idx == 0:
-                    first_line = line
-                    data[column].append(line[shifted_column_idx])
+                    data[column].append(int(line[shifted_column_idx]))
                 else:
                     # for in_flight, do not calculate difference
                     if column == 'in_flight':
@@ -91,7 +90,10 @@ def process_stats_file(file_path):
                             data[column].append(int(line[shifted_column_idx]) - int(data[column][line_idx - 1]))
         for column_idx, column in enumerate(columns[start_index:]):
             shifted_column_idx = column_idx + start_index
-            data[column][0] = int(first_line[shifted_column_idx])
+            data[column][0] = 0
+    lengths = [len(data[col]) for col in columns]
+    if len(set(lengths)) != 1:
+        raise ValueError(f"All arrays must be of the same length. Current lengths: {lengths}")
     df = pd.DataFrame(data)
     df['time_stamp'] = pd.to_datetime(df['time_stamp'], format='%Y-%m-%d %H:%M:%S.%f')
     df.sort_values(by=['time_stamp'], inplace=True)
