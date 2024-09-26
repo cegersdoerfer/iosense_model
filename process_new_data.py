@@ -252,6 +252,8 @@ def create_samples(data, time_window_size):
                 start_time = trace_start_time + i * time_window_size
                 end_time = trace_start_time + (i + 1) * time_window_size
                 trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
+                if len(trace_df_window) == 0:
+                    continue
                 # get the same operation indices in the baseline trace
                 baseline_trace_df_window = baseline_trace_df.iloc[trace_df_window.index[0]:trace_df_window.index[-1]+1]
                 # get the stats for the same time window
