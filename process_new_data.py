@@ -66,6 +66,7 @@ def process_stats_file(file_path):
     with open(file_path, 'r') as f:
         for line_idx, line in enumerate(f):
             line = line.strip()
+            print(f"Processing line: {line}")
             if line == '':
                 continue
             line = line.split()
@@ -73,7 +74,7 @@ def process_stats_file(file_path):
             data['major'].append(line[2])
             data['minor'].append(line[3])
             data['device_name'].append(line[4])
-            for column_idx, column in enumerate(columns[4:]):
+            for column_idx, column in enumerate(columns[5:]):
                 if line_idx == 0:
                     first_line = line
                     data[column].append(line[column_idx])
@@ -86,7 +87,7 @@ def process_stats_file(file_path):
                             data[column].append(int(line[column_idx]) + (2**32 - int(data[column][line_idx - 1])))
                         else:
                             data[column].append(int(line[column_idx]) - int(data[column][line_idx - 1]))
-        for column_idx, column in enumerate(columns[4:]):
+        for column_idx, column in enumerate(columns[5:]):
             data[column][0] = int(first_line[column_idx])
     df = pd.DataFrame(data)
     df['time_stamp'] = pd.to_datetime(df['time_stamp'], format='%Y-%m-%d %H:%M:%S.%f')
