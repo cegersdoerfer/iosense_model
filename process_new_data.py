@@ -116,7 +116,11 @@ def load_stats_from_dir(dir_path):
                         else:
                             id = id.replace('OST', '')
                             type_string = 'ost'
-                        id = int(id.lstrip('0'))
+                        id = id.lstrip('0')
+                        if id == '':
+                            id = '0'
+                        else:
+                            id = int(id)
                         id = f'{type_string}_{id}'
 
                         print(f"Processing subdir: {subdir}, ID: {id}")
