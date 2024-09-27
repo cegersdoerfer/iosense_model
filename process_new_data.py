@@ -227,8 +227,9 @@ def get_trace_features(trace_df_window, devices):
             trace_features['mdt'][mdt_device]['num_close_ops_per_sec'] = 0
     return trace_features, window_runtime
 
-def get_stats_features(stats_df_window, time_window_size, devices):
-    stats_features = {}
+def get_stats_features(stats_df_window, time_window_size):
+    stats_features = {'mdt': {}, 'ost': {}}
+    devices = list(stats_df_window.keys())
     for device in devices:
         total_read_ios = stats_df_window[device]['read_ios'].sum()
         total_write_ios = stats_df_window[device]['write_ios'].sum()
@@ -237,14 +238,17 @@ def get_stats_features(stats_df_window, time_window_size, devices):
         read_ticks = stats_df_window[device]['read_ticks'].sum()
         write_ticks = stats_df_window[device]['write_ticks'].sum()
         time_in_queue = stats_df_window[device]['time_in_queue'].sum()
-
-        stats_features[f'{device}_read_throughput'] = sectors_read / time_window_size
-        stats_features[f'{device}_write_throughput'] = sectors_written / time_window_size
-        stats_features[f'{device}_read_iops'] = total_read_ios / time_window_size
-        stats_features[f'{device}_write_iops'] = total_write_ios / time_window_size
-        stats_features[f'{device}_read_ticks'] = read_ticks
-        stats_features[f'{device}_write_ticks'] = write_ticks
-        stats_features[f'{device}_time_in_queue'] = time_in_queue
+        if 'mdt' in device:
+            device_type = 'mdt'
+        else:
+            device_type = 'ost'
+        stats_features[device_type][f'{device}_read_throughput'] = sectors_read / time_window_size
+        stats_features[device_type][f'{device}_write_throughput'] = sectors_written / time_window_size
+        stats_features[device_type][f'{device}_read_iops'] = total_read_ios / time_window_size
+        stats_features[device_type][f'{device}_write_iops'] = total_write_ios / time_window_size
+        stats_features[device_type][f'{device}_read_ticks'] = read_ticks
+        stats_features[device_type][f'{device}_write_ticks'] = write_ticks
+        stats_features[device_type][f'{device}_time_in_queue'] = time_in_queue
     return stats_features
 
 def get_label(baseline_trace_df_window, trace_df_runtime):

@@ -121,35 +121,33 @@ class MetricsDataset(Dataset):
                         self.ost_features[-1].append([])
                         for feature in self.features['ost_trace']:
                             try:
-                                self.ost_features[-1][-1].append(sample['trace']['ost'][f'{target_device}_{feature}'])
+                                self.ost_features[-1][-1].append(sample['trace_features']['ost'][f'{target_device}_{feature}'])
                             except:
                                 self.ost_features[-1][-1].append(0)
                         for feature in self.features['stats']:
                             try:
-                                self.mdt_features[-1][-1].append(sample['stats']['mdt'][f'{target_device}_{feature}'])
+                                self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{feature}'])
                             except:
                                 self.mdt_features[-1][-1].append(0)
                         self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
-                    for server in OST_SERVERS:
-                        self.ost_features[-1].append([])
+                    for target_device in devices['mdt']:
+                        self.mdt_features[-1].append([])
                         for column in OST_TRACE_KEYS:
                             try:
-                                self.ost_features[-1][-1].append(window_data['trace']['ost'][f'{server}_{column}'])
+                                self.mdt_features[-1][-1].append(sample['trace_features']['mdt'][f'{target_device}_{column}'])
                             except:
-                                self.ost_features[-1][-1].append(0)
-                        self.ost_features[-1][-1].append(window_data['trace']['window_size'])
-                        for column in SERVER_COLUMNS:
-                            for metric in AGG_METRICS:
-                                try:
-                                    self.ost_features[-1][-1].append(window_data['ost_stats'][f'{server}_{column}_{metric}'])
-                                except:
-                                    self.ost_features[-1][-1].append(0)
-                        self.ost_features[-1][-1] = np.nan_to_num(self.ost_features[-1][-1], nan=0)
+                                self.mdt_features[-1][-1].append(0)
+                        for column in self.features['stats']:
+                            try:
+                                self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{column}'])
+                            except:
+                                self.mdt_features[-1][-1].append(0)
+                        self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
                     
 
                     self.mdt_features[-1] = np.array(self.mdt_features[-1])
                     self.ost_features[-1] = np.array(self.ost_features[-1])
-                    self.target.append(window_data['trace']['total_time'])
+                    self.target.append(sample['relative_runtime_diff'])
                     total_idx += 1
                     
                     #pass
@@ -158,7 +156,7 @@ class MetricsDataset(Dataset):
                             # rotate positions of OST servers
                             self.mdt_features.append(self.mdt_features[-1])
                             self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
-                            self.target.append(window_data['trace']['total_time'])
+                            self.target.append(sample['relative_runtime_diff'])
                             total_idx += 1
                             
                             
