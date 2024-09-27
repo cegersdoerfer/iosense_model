@@ -57,8 +57,10 @@ def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
         ost_features[i] = ost_scaler.transform(ost_features[i])
     return ost_features, mdt_features, scaler
 
+
+
 class MetricsDataset(Dataset):
-    def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=False):
+    def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=False, window_sizes=None):
         self.workload_dirs = workload_dirs
         self.features = features
         self.augment = augment
@@ -69,22 +71,22 @@ class MetricsDataset(Dataset):
         self.mdt_features = []
         self.ost_features = []
         self.target = []
-        self.load_data(data_files)
+        self.load_data(workload_dirs, window_sizes)
         
-    def load_data(self, workload_dirs):
+    def load_data(self, workload_dirs, window_sizes):
         total_idx = 0
-
-        for dir in data:
-            for window_size in data[dir]:
-                print("window_size: ", window_size)
-                if window_size != window_size_in:
+        for workload in workload_dirs:
+            for window_size in workload_dirs[workload]:
+                if window_sizes is not None:
                     continue
-                print(f"Loading data from {data[dir][window_size]}")
-                with open(data[dir][window_size], 'r') as f:
-                    local_data = json.load(f)
+
+                # load the data file for the current window size
+                print(f"Loading data from {workload_dirs[workload][window_size]}")
+                with open(workload_dirs[workload][window_size], 'r') as f:
+                    workload_data = json.load(f)
                 
-                for config_name, config_data in local_data.items():
-                    if config_name == "None":
+                for sample in workload_data:
+                    if sample['trace']['total_time'] is None:
                         continue
                     for window_index, window_data in config_data.items():
                         if np.isnan(window_data['trace']['total_time']):

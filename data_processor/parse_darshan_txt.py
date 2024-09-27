@@ -102,7 +102,7 @@ def parse_darshan_txt(txt_output, devices):
     #    int_id = int(i.replace('mdt_', ''))
     #    dataframe_columns[f'mdt_{int_id}'] = mdt[:, int_id]
 
-    dataframe_columns['mdt_0'] = mdt
+    dataframe_columns['mdt_0'] = mdt[:, 0]
 
     df = pd.DataFrame(dataframe_columns)
     df = pd.DataFrame.from_dict(df).sort_values(by=['start'])
