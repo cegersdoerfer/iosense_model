@@ -31,30 +31,6 @@ MDT_TRACE_KEYS = ["total_IOPS", "total_stat_IOPS", \
 
 
 
-def parse_data(data_dirs):
-    data = {}
-    index = 0
-    for d in data_dirs:
-        data_dir = d
-        data[data_dir] = {}
-        for file in os.listdir(data_dir):
-            if file.endswith("time_data.json"):
-                if len(file.split('_')) == 4:
-                    #if train:
-                    if int(file.split('_')[1]) > 15:
-                        continue
-                    #else:
-                        #if int(file.split('_')[1]) > 10:
-                            #continue
-                    window_size = file.split('_')[1] + '_' + str(index)
-                else:
-                    if int(file.split('_')[2]) > 15:
-                        continue
-                    window_size = file.split('_')[2] + '_' + str(index)
-                data[data_dir][window_size] = os.path.join(data_dir, file)
-        index += 1
-    return data
-
 def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
     if scaler is None:
         mdt_scaler = StandardScaler()
@@ -82,20 +58,22 @@ def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
     return ost_features, mdt_features, scaler
 
 class MetricsDataset(Dataset):
-    def __init__(self, data_files, bin_thresholds=[2.0], scaler=None, augment=False):
-        self.data_files = data_files
+    def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=False):
+        self.workload_dirs = workload_dirs
+        self.features = features
         self.augment = augment
         self.num_bins = len(bin_thresholds) + 1
         self.bin_thresholds = bin_thresholds
         self.scaler = scaler
+        self.train = train
         self.mdt_features = []
         self.ost_features = []
         self.target = []
         self.load_data(data_files)
         
-    def load_data(self, dirs):
+    def load_data(self, workload_dirs):
         total_idx = 0
-        data = parse_data(dirs)
+
         for dir in data:
             for window_size in data[dir]:
                 print("window_size: ", window_size)

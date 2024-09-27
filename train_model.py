@@ -70,20 +70,38 @@ class SensitivityModel(nn.Module):
         return x
 
 
+def load_samples(sample_paths):
+    pass
 
 
-def get_data(config):
+def get_workload_data_paths(config, workload, train=True):
     data_root = os.path.join(IOSENSE_ROOT, config['data']['output_dir'])
-    train_sample_paths = []
-    test_sample_paths = []
+    sample_paths = {}
+    timestamp_dirs = os.listdir(os.path.join(data_root, workload))
+    # dirs are in the format of YYYY-MM-DD_HH-MM-SS
+    # get the most recent timestamp_dir
+    timestamp_dirs.sort()
+    timestamp_dir = timestamp_dirs[-1]
+    for file in os.listdir(os.path.join(data_root, workload, timestamp_dir)):
+        if train:
+            string_check = 'train'
+        else:
+            string_check = 'test'
+        if string_check in file:
+            # files are in the format of train_samples_[window_size].json
+            window_size = file.split('_')[2]
+            window_size = float(window_size.replace('.json', ''))
+            sample_paths[window_size] = os.path.join(data_root, workload, timestamp_dir, file)
+    return sample_paths
+    
+
+def get_data_paths(config):
+    train_sample_paths = {}
+    test_sample_paths = {}
     for workload in config['training']['train']['workloads']:
-        timestamp_dirs = os.listdir(os.path.join(data_root, workload))
-        for timestamp_dir in timestamp_dirs:
-            train_sample_paths.append(os.path.join(data_root, workload, timestamp_dir, 'train_samples.json'))
+        train_sample_paths[workload] = get_workload_data_paths(config, workload, train=True)
     for workload in config['training']['test']['workloads']:
-        timestamp_dirs = os.listdir(os.path.join(data_root, workload))
-        for timestamp_dir in timestamp_dirs:
-            test_sample_paths.append(os.path.join(data_root, workload, timestamp_dir, 'test_samples.json'))
+        test_sample_paths[workload] = get_workload_data_paths(config, workload, train=False)
     return train_sample_paths, test_sample_paths
 
 
@@ -96,7 +114,9 @@ def main():
               "training": train_config,
               "data": data_config
     }
-    train_samples, test_samples = get_data(config)
+    train_sample_paths, test_sample_paths = get_data_paths(config)
+    train_samples = load_samples(train_sample_paths)
+    test_samples = load_samples(test_sample_paths)
     model = SensitivityModel(hidden_size=config['model']['hidden_size'], 
                              server_out_size=config['model']['server_out_size'], 
                              output_size=config['model']['output_size'], 

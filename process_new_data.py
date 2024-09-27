@@ -11,7 +11,7 @@ from utils.config import load_cluster_config, IOSENSE_ROOT, load_data_config
 
 
 
-def load_darshan_trace_from_dir(dir_path, config_name, run_txt):
+def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
     print(f"Loading Darshan traces from {dir_path} for config {config_name}...")
     traces = []
     for file in os.listdir(dir_path):
@@ -20,14 +20,14 @@ def load_darshan_trace_from_dir(dir_path, config_name, run_txt):
                 print(f"Processing file: {file}")
                 darshan_txt = subprocess.check_output(["darshan-dxt-parser", "--show-incomplete", os.path.join(dir_path, file)])
                 darshan_txt = darshan_txt.decode('utf-8')
-                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt)
+                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt, devices)
                 traces.append(trace_df)
         else:
             if file.endswith('.txt') and config_name in file:
                 print(f"Processing file: {file}")
                 with open(os.path.join(dir_path, file), 'r') as f:
                     trace_txt = f.read()
-                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(trace_txt)
+                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(trace_txt, devices)
                 traces.append(trace_df)
     if traces:
         darshan_df = pd.concat(traces)
@@ -110,6 +110,15 @@ def load_stats_from_dir(dir_path):
                     if match:
                         print(f"Found match: {match.group(0)}")
                         id = match.group(1)
+                        if 'MDT' in id:
+                            id = id.replace('MDT', '')
+                            type_string = 'mdt'
+                        else:
+                            id = id.replace('OST', '')
+                            type_string = 'ost'
+                        id = int(id.lstrip('0'))
+                        id = f'{type_string}_{id}'
+
                         print(f"Processing subdir: {subdir}, ID: {id}")
                         if id not in stats:
                             stats[id] = []
@@ -132,14 +141,14 @@ def load_stats_from_dir(dir_path):
     return stats
             
 
-
 def get_data(model_config, run_txt):
     print("Getting data based on model configuration...")
     data = {'baseline_traces': {}, 'interference_traces': {}}
-    data_types = ['darshan_logs', 'stats']
+    data_types = ['stats', 'darshan_logs']
     workload = model_config['workload']
     time_stamp_dir = model_config['time_stamp_dir']
     data_dir = model_config['cluster_config']['data_dir']
+    devices = {'mdt': [], 'ost': []}
     for data_type in data_types:
         if data_type == 'darshan_logs':
             interference_levels = os.listdir(os.path.join(data_dir, workload, data_type, time_stamp_dir))
@@ -155,7 +164,7 @@ def get_data(model_config, run_txt):
                         if config_name not in configs:
                             configs.append(config_name)
                 for config in configs:
-                    trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level), config, run_txt)
+                    trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level), config, run_txt, devices)
                     if interference_level_num == 0:
                         data['baseline_traces'][config] = trace_df
                     else:
@@ -164,38 +173,60 @@ def get_data(model_config, run_txt):
                         data['interference_traces'][interference_level_num][config] = trace_df
         elif data_type == 'stats':
             data['stats'] = load_stats_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir))
+            devices['mdt'] = [device for device in data['stats'] if 'mdt' in device]
+            devices['ost'] = [device for device in data['stats'] if 'ost' in device]
+
+            if devices['mdt'] == [] or devices['ost'] == []:
+                raise ValueError('No MDT or OST devices found')
+    
     print("Data retrieval complete.")
-    return data
+    return data, devices
 
 
 
-def get_trace_features(trace_df_window):
+def get_trace_features(trace_df_window, devices):
     window_runtime = trace_df_window['end'].max() - trace_df_window['start'].min()
 
-    trace_features = {}
-    trace_features['num_ops'] = len(trace_df_window)
-    trace_features['num_read_ops'] = len(trace_df_window[trace_df_window['api'] == 'read'])
-    trace_features['num_write_ops'] = len(trace_df_window[trace_df_window['api'] == 'write'])
-    if window_runtime > 0:
-        trace_features['num_read_ops_per_sec'] = trace_features['num_read_ops'] / window_runtime
-        trace_features['num_write_ops_per_sec'] = trace_features['num_write_ops'] / window_runtime
-    else:
-        trace_features['num_read_ops_per_sec'] = 0
-        trace_features['num_write_ops_per_sec'] = 0
-
-    trace_features['size_read_ops'] = trace_df_window[trace_df_window['operation'] == 'read']['size'].sum()
-    trace_features['size_write_ops'] = trace_df_window[trace_df_window['operation'] == 'write']['size'].sum()
-    if window_runtime > 0:
-        trace_features['size_read_ops_per_sec'] = trace_features['size_read_ops'] / window_runtime
-        trace_features['size_write_ops_per_sec'] = trace_features['size_write_ops'] / window_runtime
-    else:
-        trace_features['size_read_ops_per_sec'] = 0
-        trace_features['size_write_ops_per_sec'] = 0
+    trace_features = {'ost': {}, 'mdt': {}}
+    ost_devices = devices['ost']
+    mdt_devices = devices['mdt']
+    for ost_device in ost_devices:
+        trace_features['ost'][f'{ost_device}_num_read_ops'] = len(trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'read')])
+        trace_features['ost'][f'{ost_device}_num_write_ops'] = len(trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')])
+        if window_runtime > 0:
+            trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_read_ops'] / window_runtime
+            trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_write_ops'] / window_runtime
+        else:
+            trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = 0
+            trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = 0
+        trace_features['ost'][f'{ost_device}_size_read_ops'] = trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'read')]['size'].sum()
+        trace_features['ost'][f'{ost_device}_size_write_ops'] = trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')]['size'].sum()
+        if window_runtime > 0:
+            trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_read_ops'] / window_runtime
+            trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_write_ops'] / window_runtime
+        else:
+            trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = 0
+            trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = 0
+    for mdt_device in mdt_devices:
+        trace_features['mdt'][mdt_device]['num_stat_ops'] = len(trace_df_window[(trace_df_window[mdt_device] == 1) & (trace_df_window['operation'] == 'stat')])
+        trace_features['mdt'][mdt_device]['num_open_ops'] = len(trace_df_window[(trace_df_window[mdt_device] == 1) & (trace_df_window['operation'] == 'open')])
+        trace_features['mdt'][mdt_device]['num_close_ops'] = len(trace_df_window[(trace_df_window[mdt_device] == 1) & (trace_df_window['operation'] == 'close')])
+        if window_runtime > 0:
+            trace_features['mdt'][mdt_device]['num_ops_per_sec'] = trace_features['mdt'][mdt_device]['num_ops'] / window_runtime
+            trace_features['mdt'][mdt_device]['num_stat_ops_per_sec'] = trace_features['mdt'][mdt_device]['num_stat_ops'] / window_runtime
+            trace_features['mdt'][mdt_device]['num_open_ops_per_sec'] = trace_features['mdt'][mdt_device]['num_open_ops'] / window_runtime
+            trace_features['mdt'][mdt_device]['num_close_ops_per_sec'] = trace_features['mdt'][mdt_device]['num_close_ops'] / window_runtime
+        else:
+            trace_features['mdt'][mdt_device]['num_ops_per_sec'] = 0
+            trace_features['mdt'][mdt_device]['num_stat_ops_per_sec'] = 0
+            trace_features['mdt'][mdt_device]['num_open_ops_per_sec'] = 0
+            trace_features['mdt'][mdt_device]['num_close_ops_per_sec'] = 0
     return trace_features, window_runtime
 
 def get_stats_features(stats_df_window, time_window_size):
     stats_features = {}
-    for device in stats_df_window:
+    devices = list(stats_df_window.keys())
+    for device in devices:
         total_read_ios = stats_df_window[device]['read_ios'].sum()
         total_write_ios = stats_df_window[device]['write_ios'].sum()
         sectors_read = stats_df_window[device]['sectors_read'].sum()
@@ -211,7 +242,7 @@ def get_stats_features(stats_df_window, time_window_size):
         stats_features[f'{device}_read_ticks'] = read_ticks
         stats_features[f'{device}_write_ticks'] = write_ticks
         stats_features[f'{device}_time_in_queue'] = time_in_queue
-    return stats_features
+    return stats_features, devices
 
 def get_label(baseline_trace_df_window, trace_df_runtime):
     baseline_runtime = baseline_trace_df_window['end'].max() - baseline_trace_df_window['start'].min()
@@ -225,11 +256,11 @@ def get_label(baseline_trace_df_window, trace_df_runtime):
 
     
 
-def calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size):
-    trace_features, window_runtime = get_trace_features(trace_df_window)
+def calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size, server_config):
+    stats_features, devices = get_stats_features(stats_df_window, time_window_size)
+    trace_features, window_runtime = get_trace_features(trace_df_window, devices, server_config)
     if window_runtime > 0:
         time_window_size = window_runtime
-    stats_features = get_stats_features(stats_df_window, time_window_size)
     absolute_runtime_diff, relative_runtime_diff = get_label(baseline_trace_df_window, window_runtime)
     sample = {
         'trace_features': trace_features,
@@ -239,7 +270,7 @@ def calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window,
     }
     return sample
 
-def create_samples(data, time_window_size, test_size):
+def create_samples(data, time_window_size, test_size, devices):
     print(f"Creating samples with time window size: {time_window_size}")
     train_samples = []
     test_samples = []
@@ -315,8 +346,9 @@ def main():
     for window_size in window_sizes:
         data_config['time_window_size'] = window_size
         print(f"Processing window size: {window_size}")
-        data = get_data(data_config, args.run_txt)
-        train_samples, test_samples = create_samples(data, window_size, data_config['test_size'])
+        data, devices = get_data(data_config, args.run_txt)
+        print(f"Devices: {devices}")
+        train_samples, test_samples = create_samples(data, window_size, data_config['test_size'], devices)
         save_samples(train_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], data_config['time_stamp_dir'], f'train_samples_{window_size}.json'))
         save_samples(test_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], data_config['time_stamp_dir'], f'test_samples_{window_size}.json'))
     print("Main process complete.")
