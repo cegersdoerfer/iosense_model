@@ -189,6 +189,7 @@ def get_data(model_config, run_txt):
 
 
 def get_trace_features(trace_df_window, devices):
+    print(f"Getting trace features for {len(trace_df_window)} operations")
     window_runtime = trace_df_window['end'].max() - trace_df_window['start'].min()
 
     trace_features = {'ost': {}, 'mdt': {}}
