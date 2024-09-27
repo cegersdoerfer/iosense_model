@@ -9,6 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 import pickle
 from sklearn.preprocessing import StandardScaler
+import re
 
 #cloudlab cluster
 #OST_SERVERS = ['ost0', 'ost1', 'ost2', 'ost3', 'ost4', 'ost5', 'ost6', 'ost7', 'ost8', 'ost9', 'ost10']
@@ -57,10 +58,31 @@ def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
         ost_features[i] = ost_scaler.transform(ost_features[i])
     return ost_features, mdt_features, scaler
 
+def get_devices(workload_data_sample):
+    mdt_devices = []
+    ost_devices = []
+    for server_type in workload_data_sample['trace']:
+        if server_type == 'mdt':
+            server_string = 'mdt'
+        else:
+            server_string = 'ost'
+        for feature in workload_data_sample['trace'][server_type]:
+            # each feature will be [server_type]_[device_id]_[metric]
+            device_id = re.search(f'({server_string}_\d+)', feature).group(1)
+            print(f"Device ID: {device_id}")
+            if server_type == 'mdt' and device_id not in mdt_devices:
+                mdt_devices.append(device_id)
+            elif server_type == 'ost' and device_id not in ost_devices:
+                ost_devices.append(device_id)
+    devices = {'mdt': mdt_devices, 'ost': ost_devices}
+    return devices
+            
+        
+
 
 
 class MetricsDataset(Dataset):
-    def __init__(self, workload_dirs, features, devices, bin_thresholds=[2.0], train=True, scaler=None, augment=False, window_sizes=None):
+    def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=False, window_sizes=None):
         self.workload_dirs = workload_dirs
         self.features = features
         self.augment = augment
@@ -87,25 +109,26 @@ class MetricsDataset(Dataset):
                 with open(workload_dirs[workload][window_size], 'r') as f:
                     workload_data = json.load(f)
                 
+                devices = get_devices(workload_data[0])
+                print(f"Devices: {devices}")
+
                 for sample in workload_data:
                     # each sample should have a trace_features, stats_features, absolute_runtime_diff, relative_runtime_diff
                     # trace_features also has 'ost' and 'mdt'
                     self.mdt_features.append([])
                     self.ost_features.append([])
-                    for server in MDT_SERVERS:
-                        self.mdt_features[-1].append([])
-                        for column in MDT_TRACE_KEYS:
+                    for target_device in devices['ost']:
+                        self.ost_features[-1].append([])
+                        for feature in self.features['ost_trace']:
                             try:
-                                self.mdt_features[-1][-1].append(window_data['trace']['mdt'][f'{server}_{column}'])
+                                self.ost_features[-1][-1].append(sample['trace']['ost'][f'{target_device}_{feature}'])
+                            except:
+                                self.ost_features[-1][-1].append(0)
+                        for feature in self.features['stats']:
+                            try:
+                                self.mdt_features[-1][-1].append(sample['stats']['mdt'][f'{target_device}_{feature}'])
                             except:
                                 self.mdt_features[-1][-1].append(0)
-                        self.mdt_features[-1][-1].append(window_data['trace']['window_size'])
-                        for column in SERVER_COLUMNS:
-                            for metric in AGG_METRICS:
-                                try:
-                                    self.mdt_features[-1][-1].append(window_data['mdt_stats'][f'{server}_{column}_{metric}'])
-                                except:
-                                    self.mdt_features[-1][-1].append(0)
                         self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
                     for server in OST_SERVERS:
                         self.ost_features[-1].append([])
