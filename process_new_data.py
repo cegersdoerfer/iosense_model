@@ -264,7 +264,7 @@ def get_label(baseline_trace_df_window, trace_df_runtime):
     
 
 def calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size, devices):
-    stats_features = get_stats_features(stats_df_window, time_window_size, devices)
+    stats_features = get_stats_features(stats_df_window, time_window_size)
     trace_features, window_runtime = get_trace_features(trace_df_window, devices)
     if window_runtime > 0:
         time_window_size = window_runtime
