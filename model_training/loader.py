@@ -60,7 +60,7 @@ def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
 
 
 class MetricsDataset(Dataset):
-    def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=False, window_sizes=None):
+    def __init__(self, workload_dirs, features, devices, bin_thresholds=[2.0], train=True, scaler=None, augment=False, window_sizes=None):
         self.workload_dirs = workload_dirs
         self.features = features
         self.augment = augment
@@ -71,6 +71,7 @@ class MetricsDataset(Dataset):
         self.mdt_features = []
         self.ost_features = []
         self.target = []
+
         self.load_data(workload_dirs, window_sizes)
         
     def load_data(self, workload_dirs, window_sizes):
@@ -78,66 +79,64 @@ class MetricsDataset(Dataset):
         for workload in workload_dirs:
             for window_size in workload_dirs[workload]:
                 if window_sizes is not None:
-                    continue
-
+                    if window_size not in window_sizes:
+                        continue
+                
                 # load the data file for the current window size
                 print(f"Loading data from {workload_dirs[workload][window_size]}")
                 with open(workload_dirs[workload][window_size], 'r') as f:
                     workload_data = json.load(f)
                 
                 for sample in workload_data:
-                    if sample['trace']['total_time'] is None:
-                        continue
-                    for window_index, window_data in config_data.items():
-                        if np.isnan(window_data['trace']['total_time']):
-                            continue
-                        self.mdt_features.append([])
-                        self.ost_features.append([])
-                        for server in MDT_SERVERS:
-                            self.mdt_features[-1].append([])
-                            for column in MDT_TRACE_KEYS:
+                    # each sample should have a trace_features, stats_features, absolute_runtime_diff, relative_runtime_diff
+                    # trace_features also has 'ost' and 'mdt'
+                    self.mdt_features.append([])
+                    self.ost_features.append([])
+                    for server in MDT_SERVERS:
+                        self.mdt_features[-1].append([])
+                        for column in MDT_TRACE_KEYS:
+                            try:
+                                self.mdt_features[-1][-1].append(window_data['trace']['mdt'][f'{server}_{column}'])
+                            except:
+                                self.mdt_features[-1][-1].append(0)
+                        self.mdt_features[-1][-1].append(window_data['trace']['window_size'])
+                        for column in SERVER_COLUMNS:
+                            for metric in AGG_METRICS:
                                 try:
-                                    self.mdt_features[-1][-1].append(window_data['trace']['mdt'][f'{server}_{column}'])
+                                    self.mdt_features[-1][-1].append(window_data['mdt_stats'][f'{server}_{column}_{metric}'])
                                 except:
                                     self.mdt_features[-1][-1].append(0)
-                            self.mdt_features[-1][-1].append(window_data['trace']['window_size'])
-                            for column in SERVER_COLUMNS:
-                                for metric in AGG_METRICS:
-                                    try:
-                                        self.mdt_features[-1][-1].append(window_data['mdt_stats'][f'{server}_{column}_{metric}'])
-                                    except:
-                                        self.mdt_features[-1][-1].append(0)
-                            self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
-                        for server in OST_SERVERS:
-                            self.ost_features[-1].append([])
-                            for column in OST_TRACE_KEYS:
+                        self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
+                    for server in OST_SERVERS:
+                        self.ost_features[-1].append([])
+                        for column in OST_TRACE_KEYS:
+                            try:
+                                self.ost_features[-1][-1].append(window_data['trace']['ost'][f'{server}_{column}'])
+                            except:
+                                self.ost_features[-1][-1].append(0)
+                        self.ost_features[-1][-1].append(window_data['trace']['window_size'])
+                        for column in SERVER_COLUMNS:
+                            for metric in AGG_METRICS:
                                 try:
-                                    self.ost_features[-1][-1].append(window_data['trace']['ost'][f'{server}_{column}'])
+                                    self.ost_features[-1][-1].append(window_data['ost_stats'][f'{server}_{column}_{metric}'])
                                 except:
                                     self.ost_features[-1][-1].append(0)
-                            self.ost_features[-1][-1].append(window_data['trace']['window_size'])
-                            for column in SERVER_COLUMNS:
-                                for metric in AGG_METRICS:
-                                    try:
-                                        self.ost_features[-1][-1].append(window_data['ost_stats'][f'{server}_{column}_{metric}'])
-                                    except:
-                                        self.ost_features[-1][-1].append(0)
-                            self.ost_features[-1][-1] = np.nan_to_num(self.ost_features[-1][-1], nan=0)
-                        
+                        self.ost_features[-1][-1] = np.nan_to_num(self.ost_features[-1][-1], nan=0)
+                    
 
-                        self.mdt_features[-1] = np.array(self.mdt_features[-1])
-                        self.ost_features[-1] = np.array(self.ost_features[-1])
-                        self.target.append(window_data['trace']['total_time'])
-                        total_idx += 1
-                        
-                        #pass
-                        if self.augment:
-                            for i in range(len(OST_SERVERS)-1):
-                                # rotate positions of OST servers
-                                self.mdt_features.append(self.mdt_features[-1])
-                                self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
-                                self.target.append(window_data['trace']['total_time'])
-                                total_idx += 1
+                    self.mdt_features[-1] = np.array(self.mdt_features[-1])
+                    self.ost_features[-1] = np.array(self.ost_features[-1])
+                    self.target.append(window_data['trace']['total_time'])
+                    total_idx += 1
+                    
+                    #pass
+                    if self.augment:
+                        for i in range(len(OST_SERVERS)-1):
+                            # rotate positions of OST servers
+                            self.mdt_features.append(self.mdt_features[-1])
+                            self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
+                            self.target.append(window_data['trace']['total_time'])
+                            total_idx += 1
                             
                             
         print(f"Total number of data points: {total_idx}")
