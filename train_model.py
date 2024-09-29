@@ -99,9 +99,9 @@ def get_workload_data_paths(config, workload, train=True):
 def get_data_paths(config):
     train_sample_paths = {}
     test_sample_paths = {}
-    for workload in config['train_config']['workloads']:
+    for workload in config['train_config']['train']['workloads']:
         train_sample_paths[workload] = get_workload_data_paths(config, workload, train=True)
-    for workload in config['test_config']['workloads']:
+    for workload in config['train_config']['test']['workloads']:
         test_sample_paths[workload] = get_workload_data_paths(config, workload, train=False)
     return train_sample_paths, test_sample_paths
 
