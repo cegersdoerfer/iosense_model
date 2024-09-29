@@ -76,7 +76,7 @@ class SensitivityModel(nn.Module):
 
 
 def get_workload_data_paths(config, workload, train=True):
-    data_root = os.path.join(IOSENSE_ROOT, config['data']['output_dir'])
+    data_root = os.path.join(IOSENSE_ROOT, config['data_config']['output_dir'])
     sample_paths = {}
     timestamp_dirs = os.listdir(os.path.join(data_root, workload))
     # dirs are in the format of YYYY-MM-DD_HH-MM-SS
@@ -99,9 +99,9 @@ def get_workload_data_paths(config, workload, train=True):
 def get_data_paths(config):
     train_sample_paths = {}
     test_sample_paths = {}
-    for workload in config['train']['workloads']:
+    for workload in config['train_config']['workloads']:
         train_sample_paths[workload] = get_workload_data_paths(config, workload, train=True)
-    for workload in config['test']['workloads']:
+    for workload in config['test_config']['workloads']:
         test_sample_paths[workload] = get_workload_data_paths(config, workload, train=False)
     return train_sample_paths, test_sample_paths
 
@@ -117,7 +117,7 @@ def main():
               "train_config": train_config,
               "data_config": data_config
     }
-    train_sample_paths, test_sample_paths = get_data_paths(config['train_config'])
+    train_sample_paths, test_sample_paths = get_data_paths(config)
     train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'])
     training_scaler = train_samples.scaler
     devices = train_samples.devices
