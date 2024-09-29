@@ -99,9 +99,9 @@ def get_workload_data_paths(config, workload, train=True):
 def get_data_paths(config):
     train_sample_paths = {}
     test_sample_paths = {}
-    for workload in config['training']['train']['workloads']:
+    for workload in config['train']['workloads']:
         train_sample_paths[workload] = get_workload_data_paths(config, workload, train=True)
-    for workload in config['training']['test']['workloads']:
+    for workload in config['test']['workloads']:
         test_sample_paths[workload] = get_workload_data_paths(config, workload, train=False)
     return train_sample_paths, test_sample_paths
 
@@ -117,7 +117,7 @@ def main():
               "train_config": train_config,
               "data_config": data_config
     }
-    train_sample_paths, test_sample_paths = get_data_paths(config)
+    train_sample_paths, test_sample_paths = get_data_paths(config['train_config'])
     train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'])
     training_scaler = train_samples.scaler
     devices = train_samples.devices
