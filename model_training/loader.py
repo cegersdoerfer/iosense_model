@@ -43,12 +43,12 @@ def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
 def get_devices(workload_data_sample):
     mdt_devices = []
     ost_devices = []
-    for server_type in workload_data_sample['trace']:
+    for server_type in workload_data_sample['trace_features']:
         if server_type == 'mdt':
             server_string = 'mdt'
         else:
             server_string = 'ost'
-        for feature in workload_data_sample['trace'][server_type]:
+        for feature in workload_data_sample['trace_features'][server_type]:
             # each feature will be [server_type]_[device_id]_[metric]
             device_id = re.search(f'({server_string}_\d+)', feature).group(1)
             print(f"Device ID: {device_id}")
@@ -92,14 +92,14 @@ class MetricsDataset(Dataset):
                     workload_data = json.load(f)
                 
                 self.devices = get_devices(workload_data[0])
-                print(f"Devices: {devices}")
+                print(f"Devices: {self.devices}")
 
                 for sample in workload_data:
                     # each sample should have a trace_features, stats_features, absolute_runtime_diff, relative_runtime_diff
                     # trace_features also has 'ost' and 'mdt'
                     self.mdt_features.append([])
                     self.ost_features.append([])
-                    for target_device in devices['ost']:
+                    for target_device in self.devices['ost']:
                         self.ost_features[-1].append([])
                         for feature in self.features['ost_trace']:
                             try:
@@ -112,7 +112,7 @@ class MetricsDataset(Dataset):
                             except:
                                 self.ost_features[-1][-1].append(0)
                         self.ost_features[-1][-1] = np.nan_to_num(self.ost_features[-1][-1], nan=0)
-                    for target_device in devices['mdt']:
+                    for target_device in self.devices['mdt']:
                         self.mdt_features[-1].append([])
                         for feature in self.features['mdt_trace']:
                             try:
@@ -134,7 +134,7 @@ class MetricsDataset(Dataset):
                     
                     #pass
                     if self.augment:
-                        for i in range(len(devices['ost'])-1):
+                        for i in range(len(self.devices['ost'])-1):
                             # rotate positions of OST servers
                             self.mdt_features.append(self.mdt_features[-1])
                             self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
