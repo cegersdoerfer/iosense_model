@@ -118,21 +118,21 @@ def main():
               "data_config": data_config
     }
     train_sample_paths, test_sample_paths = get_data_paths(config)
-    train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['model']['features'])
+    train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'])
     training_scaler = train_samples.scaler
     devices = train_samples.devices
     train_loader = DataLoader(train_samples, batch_size=1, shuffle=True)
-    test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['model']['features'], scaler=training_scaler)
+    test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler)
     validation_samples = test_samples[:int(0.8*len(test_samples))]
     test_samples = test_samples[int(0.8*len(test_samples)):]
     test_loader = DataLoader(test_samples, batch_size=1, shuffle=True)
     validation_loader = DataLoader(validation_samples, batch_size=1, shuffle=True)
     model = SensitivityModel(devices,
-                             config['model_config']['model']['features'],
-                             hidden_size=config['model_config']['model']['hidden_size'], 
-                             server_out_size=config['model_config']['model']['server_out_size'], 
-                             output_size=config['model_config']['model']['output_size'], 
-                             server_emb_size=config['model_config']['model']['server_emb_size'])
+                             config['model_config']['features'],
+                             hidden_size=config['model_config']['hidden_size'], 
+                             server_out_size=config['model_config']['server_out_size'], 
+                             output_size=config['model_config']['output_size'], 
+                             server_emb_size=config['model_config']['server_emb_size'])
 
     
 if __name__ == "__main__":
