@@ -51,7 +51,6 @@ def get_devices(workload_data_sample):
         for feature in workload_data_sample['trace_features'][server_type]:
             # each feature will be [server_type]_[device_id]_[metric]
             device_id = re.search(f'({server_string}_\d+)', feature).group(1)
-            print(f"Device ID: {device_id}")
             if server_type == 'mdt' and device_id not in mdt_devices:
                 mdt_devices.append(device_id)
             elif server_type == 'ost' and device_id not in ost_devices:
