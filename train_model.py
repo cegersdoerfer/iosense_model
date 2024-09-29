@@ -2,7 +2,9 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
 from utils.config import load_model_config, load_data_config, load_train_config, IOSENSE_ROOT
+from model_training.loader import MetricsDataset
 
 
 
@@ -12,11 +14,13 @@ from utils.config import load_model_config, load_data_config, load_train_config,
 
 
 class SensitivityModel(nn.Module):
-    def __init__(self, hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=32):
+    def __init__(self, devices, features, hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=32):
+        self.devices = devices
+        self.features = features
         super(SensitivityModel, self).__init__()
-        mdt_input_width = len(SERVER_COLUMNS) + len(MDT_TRACE_KEYS) + 1
+        mdt_input_width = len(features['stats']) + len(features['mdt_trace']) + 1
         print('mdt_input_width: ', mdt_input_width)
-        ost_input_width = len(SERVER_COLUMNS) + len(OST_TRACE_KEYS) + 1
+        ost_input_width = len(features['stats']) + len(features['ost_trace']) + 1
         print('ost_input_width: ', ost_input_width)
         self.server_out_size = server_out_size
         self.mdt_fc = nn.Linear(mdt_input_width, server_emb_size)
@@ -26,7 +30,7 @@ class SensitivityModel(nn.Module):
         self.ost_fc = nn.Linear(ost_input_width, server_emb_size)
         self.ost_fc_hidden = nn.Linear(server_emb_size, hidden_size)
         self.ost_fc_out = nn.Linear(hidden_size, server_out_size)
-        self.fc_bridge = nn.Linear(len(MDT_SERVERS)*server_out_size + len(OST_SERVERS)*server_out_size, hidden_size)
+        self.fc_bridge = nn.Linear(len(devices['mdt'])*server_out_size + len(devices['ost'])*server_out_size, hidden_size)
         #self.fc_hidden = nn.Linear(hidden_size, hidden_size)
         self.fc_out = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
@@ -43,7 +47,7 @@ class SensitivityModel(nn.Module):
         mdt = self.relu(mdt)
         mdt = self.mdt_fc_out(mdt)
         mdt = self.relu(mdt)
-        mdt = mdt.view(-1, len(MDT_SERVERS)*self.server_out_size)
+        mdt = mdt.view(-1, len(self.devices['mdt'])*self.server_out_size)
         return mdt
 
     def ost_forward(self, ost):
@@ -54,7 +58,7 @@ class SensitivityModel(nn.Module):
         ost = self.relu(ost)
         ost = self.ost_fc_out(ost)
         ost = self.relu(ost)
-        ost = ost.view(-1, len(OST_SERVERS)*self.server_out_size)
+        ost = ost.view(-1, len(self.devices['ost'])*self.server_out_size)
         return ost
 
     def forward(self, mdt, ost):
@@ -69,9 +73,6 @@ class SensitivityModel(nn.Module):
         x = self.last_activation(x)
         return x
 
-
-def load_samples(sample_paths):
-    pass
 
 
 def get_workload_data_paths(config, workload, train=True):
@@ -105,6 +106,8 @@ def get_data_paths(config):
     return train_sample_paths, test_sample_paths
 
 
+def train_model(config):
+    pass
 
 def main():
     model_config = load_model_config()
@@ -115,11 +118,22 @@ def main():
               "data": data_config
     }
     train_sample_paths, test_sample_paths = get_data_paths(config)
-    train_samples = load_samples(train_sample_paths)
-    test_samples = load_samples(test_sample_paths)
-    model = SensitivityModel(hidden_size=config['model']['hidden_size'], 
+    train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model']['features'])
+    training_scaler = train_samples.scaler
+    devices = train_samples.devices
+    train_loader = DataLoader(train_samples, batch_size=config['training']['batch_size'], shuffle=True)
+    test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model']['features'], scaler=training_scaler)
+    validation_samples = test_samples[:int(0.8*len(test_samples))]
+    test_samples = test_samples[int(0.8*len(test_samples)):]
+    test_loader = DataLoader(test_samples, batch_size=config['training']['batch_size'], shuffle=True)
+    validation_loader = DataLoader(validation_samples, batch_size=config['training']['batch_size'], shuffle=True)
+    model = SensitivityModel(devices,
+                             config['model']['features'],
+                             hidden_size=config['model']['hidden_size'], 
                              server_out_size=config['model']['server_out_size'], 
                              output_size=config['model']['output_size'], 
                              server_emb_size=config['model']['server_emb_size'])
+
+    
 if __name__ == "__main__":
     main()

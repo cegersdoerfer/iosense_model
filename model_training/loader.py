@@ -11,24 +11,6 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 import re
 
-#cloudlab cluster
-#OST_SERVERS = ['ost0', 'ost1', 'ost2', 'ost3', 'ost4', 'ost5', 'ost6', 'ost7', 'ost8', 'ost9', 'ost10']
-OST_SERVERS = ['ost0', 'ost1', 'ost2', 'ost3', 'ost4', 'ost5']
-MDT_SERVERS = ['mdt']
-#SERVER_COLUMNS = ['read_ios', 'read_merges', 'sectors_read', 'time_reading', 'write_ios', 'write_merges', 'sectors_written', 'time_writing', 'in_progress', 'io_time', 'weighted_io_time']
-SERVER_COLUMNS = ['read_ios', 'write_ios', 'sectors_read', 'sectors_written', 'weighted_io_time']
-#AGG_METRICS = ['mean', 'std', 'sum']
-AGG_METRICS = ['mean']
-TRACE_KEYS = ["total_time", "window_size"]
-#OST_TRACE_KEYS = ["total_ops", "total_size", "total_reads", "total_writes", \
-                    #"total_read_size", "total_write_size", "IOPS", "read_IOPS", "write_IOPS", "throughput", \
-                    #"read_throughput", "write_throughput"]
-OST_TRACE_KEYS = ["IOPS", "read_IOPS", "write_IOPS", "throughput", \
-                    "read_throughput", "write_throughput"]
-
-
-MDT_TRACE_KEYS = ["total_IOPS", "total_stat_IOPS", \
-                    "total_open_IOPS"]
 
 
 
@@ -109,7 +91,7 @@ class MetricsDataset(Dataset):
                 with open(workload_dirs[workload][window_size], 'r') as f:
                     workload_data = json.load(f)
                 
-                devices = get_devices(workload_data[0])
+                self.devices = get_devices(workload_data[0])
                 print(f"Devices: {devices}")
 
                 for sample in workload_data:
@@ -126,20 +108,20 @@ class MetricsDataset(Dataset):
                                 self.ost_features[-1][-1].append(0)
                         for feature in self.features['stats']:
                             try:
-                                self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{feature}'])
+                                self.ost_features[-1][-1].append(sample['stats_features']['ost'][f'{target_device}_{feature}'])
                             except:
-                                self.mdt_features[-1][-1].append(0)
-                        self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
+                                self.ost_features[-1][-1].append(0)
+                        self.ost_features[-1][-1] = np.nan_to_num(self.ost_features[-1][-1], nan=0)
                     for target_device in devices['mdt']:
                         self.mdt_features[-1].append([])
-                        for column in OST_TRACE_KEYS:
+                        for feature in self.features['mdt_trace']:
                             try:
-                                self.mdt_features[-1][-1].append(sample['trace_features']['mdt'][f'{target_device}_{column}'])
+                                self.mdt_features[-1][-1].append(sample['trace_features']['mdt'][f'{target_device}_{feature}'])
                             except:
                                 self.mdt_features[-1][-1].append(0)
-                        for column in self.features['stats']:
+                        for feature in self.features['stats']:
                             try:
-                                self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{column}'])
+                                self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{feature}'])
                             except:
                                 self.mdt_features[-1][-1].append(0)
                         self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
@@ -152,7 +134,7 @@ class MetricsDataset(Dataset):
                     
                     #pass
                     if self.augment:
-                        for i in range(len(OST_SERVERS)-1):
+                        for i in range(len(devices['ost'])-1):
                             # rotate positions of OST servers
                             self.mdt_features.append(self.mdt_features[-1])
                             self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
