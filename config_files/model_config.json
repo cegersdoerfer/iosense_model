@@ -1,13 +1,11 @@
 {
-    "model":{
-        "features":{
-            "stats": ["read_throughput", "write_throughput", "read_iops", "write_iops", "read_ticks", "write_ticks", "time_in_queue"],
-            "mdt_trace": ["num_open_ops", "num_close_ops", "num_stat_ops", "num_ops_per_sec", "num_open_ops_per_sec", "num_close_ops_per_sec", "num_stat_ops_per_sec"],
-            "ost_trace": ["num_read_ops", "num_write_ops", "size_read_ops", "size_write_ops", "num_read_ops_per_sec", "num_write_ops_per_sec", "size_read_ops_per_sec", "size_write_ops_per_sec"]
-        },
-        "hidden_size": 16,
-        "server_out_size": 8,
-        "output_size": 1,
-        "server_emb_size": 32
-    }
+    "features":{
+        "stats": ["read_throughput", "write_throughput", "read_iops", "write_iops", "read_ticks", "write_ticks", "time_in_queue"],
+        "mdt_trace": ["num_open_ops", "num_close_ops", "num_stat_ops", "num_ops_per_sec", "num_open_ops_per_sec", "num_close_ops_per_sec", "num_stat_ops_per_sec"],
+        "ost_trace": ["num_read_ops", "num_write_ops", "size_read_ops", "size_write_ops", "num_read_ops_per_sec", "num_write_ops_per_sec", "size_read_ops_per_sec", "size_write_ops_per_sec"]
+    },
+    "hidden_size": 16,
+    "server_out_size": 8,
+    "output_size": 1,
+    "server_emb_size": 32
 }
