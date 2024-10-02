@@ -224,10 +224,11 @@ def main():
     devices = train_samples.devices
     train_loader = DataLoader(train_samples, batch_size=1, shuffle=True)
     test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler)
-    validation_samples = test_samples[:int(0.8*len(test_samples))]
-    test_samples = test_samples[int(0.8*len(test_samples)):]
-    test_loader = DataLoader(test_samples, batch_size=1, shuffle=True)
-    validation_loader = DataLoader(validation_samples, batch_size=1, shuffle=True)
+    validation_size = int(0.2*len(test_samples))
+    test_size = len(test_samples) - validation_size
+    test_dataset, validation_dataset = torch.utils.data.random_split(test_samples, [test_size, validation_size])
+    validation_loader = DataLoader(validation_dataset, batch_size=1, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
     model = SensitivityModel(devices,
                              config['model_config']['features'],
                              hidden_size=config['model_config']['hidden_size'], 
