@@ -233,12 +233,12 @@ def main():
               "data_config": data_config
     }
     train_sample_paths, test_sample_paths = get_data_paths(config)
-    train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'])
+    train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'], window_sizes=config['train_config']['train']['window_sizes'])
     training_scaler = train_samples.scaler
     devices = train_samples.devices
     train_loader = DataLoader(train_samples, batch_size=1, shuffle=True)
     print('train set size: ', len(train_samples))
-    test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler)
+    test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler, window_sizes=config['train_config']['test']['window_sizes'])
     validation_size = int(0.2*len(test_samples))
     test_size = len(test_samples) - validation_size
     test_dataset, validation_dataset = torch.utils.data.random_split(test_samples, [test_size, validation_size])

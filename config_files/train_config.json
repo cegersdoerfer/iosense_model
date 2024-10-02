@@ -1,8 +1,10 @@
 {
     "train": {
-        "workloads": ["IO500"]
+        "workloads": ["IO500"],
+        "window_sizes": [0.2]
     },
     "test": {
-        "workloads": ["IO500"]
+        "workloads": ["IO500"],
+        "window_sizes": [0.2]
     }
 }
