@@ -157,7 +157,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
     best_model = model
     best_loss = float('inf')
     loss_steps = 5000
-    num_epochs = 10
+    num_epochs = 30
     train_loss = 0
     idx = 0
     for epoch in range(num_epochs):
@@ -255,6 +255,7 @@ def main():
                              server_out_size=config['model_config']['server_out_size'], 
                              output_size=config['model_config']['output_size'], 
                              server_emb_size=config['model_config']['server_emb_size'])
+    print(model)
     
     train_losses, train_f1, valid_losses, valid_f1, best_model, criterion = train_model(train_loader, validation_loader, model)
     test_losses, test_f1 = test_model(test_loader, best_model, criterion)
