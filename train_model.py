@@ -9,10 +9,6 @@ from model_training.loader import MetricsDataset
 
 
 
-
-
-
-
 class SensitivityModel(nn.Module):
     def __init__(self, devices, features, hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=32):
         self.devices = devices
@@ -106,8 +102,101 @@ def get_data_paths(config):
     return train_sample_paths, test_sample_paths
 
 
-def train_model(config):
-    pass
+
+def get_metrics(output, label, num_bins=2):
+    metrics = {}
+    if num_bins == 2:
+        metrics['tp'] += ((output > 0.5) & (label == 1)).sum().item()
+        metrics['fp'] += ((output > 0.5) & (label == 0)).sum().item()
+        metrics['tn'] += ((output <= 0.5) & (label == 0)).sum().item()
+        metrics['fn'] += ((output <= 0.5) & (label == 1)).sum().item()
+        metrics['f1'] = metrics['tp'] / (metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn']))
+        metrics['acc'] = (metrics['tp'] + metrics['tn']) / (metrics['tp'] + metrics['tn'] + metrics['fp'] + metrics['fn'])
+        metrics['prec'] = metrics['tp'] / (metrics['tp'] + metrics['fp'])
+        metrics['rec'] = metrics['tp'] / (metrics['tp'] + metrics['fn'])
+    else:
+        metrics['tp'] += (output == label).sum().item()
+        metrics['fp'] += ((output == 0) & (label == 1)).sum().item()
+        metrics['tn'] += ((output == 0) & (label == 0)).sum().item()
+        metrics['fn'] += ((output == 1) & (label == 0)).sum().item()
+        metrics['f1'] = metrics['tp'] / (metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn']))
+        metrics['acc'] = (metrics['tp'] + metrics['tn']) / (metrics['tp'] + metrics['tn'] + metrics['fp'] + metrics['fn'])
+        metrics['prec'] = metrics['tp'] / (metrics['tp'] + metrics['fp'])
+        metrics['rec'] = metrics['tp'] / (metrics['tp'] + metrics['fn'])
+    return metrics
+
+
+def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
+    if num_bins == 2:
+        criterion = nn.BCELoss()
+    else:
+        criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    train_losses = []
+    valid_losses = []
+    train_f1 = []
+    valid_f1 = []
+    best_model = model
+    loss_steps = 5000
+    num_epochs = 10
+    train_loss = 0
+    idx = 0
+    for epoch in range(num_epochs):
+        model.train()
+        train_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
+        for i, (mdt, ost, label) in enumerate(train_data_loader):
+            optimizer.zero_grad()
+            output = model(mdt, ost)
+            loss = criterion(output, label)
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
+            train_metrics = get_metrics(output, label, num_bins=num_bins)
+            if idx % loss_steps == 0:   
+                print(f"Epoch {epoch+1}/{num_epochs}, Step {idx+1}/{len(train_data_loader)}, Loss: {train_loss/loss_steps:.4f}")
+                train_loss = 0
+            idx += 1
+        print(f"Training metrics: {train_metrics}")
+        train_losses.append(train_loss)
+        train_f1.append(train_metrics['f1'])
+
+        model.eval()
+        valid_loss = 0
+        valid_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
+        with torch.no_grad():
+            for mdt, ost, label in validation_data_loader:
+                output = model(mdt, ost)
+                loss = criterion(output, label)
+                valid_loss += loss.item()
+                valid_metrics = get_metrics(output, label, num_bins=num_bins)
+        valid_losses.append(valid_loss)
+        valid_f1.append(valid_metrics['f1'])
+        print(f"Validation metrics: {valid_metrics}")
+        if valid_loss < best_loss:
+            best_loss = valid_loss
+            best_model = model
+    return train_losses, train_f1, valid_losses, valid_f1, best_model, criterion
+
+def test_model(test_data_loader, model, criterion):
+    model.eval()
+    test_loss = 0
+    test_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
+    with torch.no_grad():
+        for mdt, ost, label in test_data_loader:
+            output = model(mdt, ost)
+            loss = criterion(output, label)
+            test_loss += loss.item()
+            test_metrics = get_metrics(output, label, num_bins=2)
+        print(f"Test metrics: {test_metrics}")
+    return test_loss, test_metrics
+
+
+def save_model(model, path):
+    torch.save(model.state_dict(), path)
+
+def load_model(model, path):
+    model.load_state_dict(torch.load(path))
+    return model
 
 def main():
     model_config = load_model_config()
@@ -133,6 +222,17 @@ def main():
                              server_out_size=config['model_config']['server_out_size'], 
                              output_size=config['model_config']['output_size'], 
                              server_emb_size=config['model_config']['server_emb_size'])
+    
+    train_losses, train_f1, valid_losses, valid_f1, best_model, criterion = train_model(train_loader, validation_loader, model)
+    test_losses, test_f1 = test_model(test_loader, best_model, criterion)
+
+    print(f"Train Loss: {train_losses[-1]}, Train F1: {train_f1[-1]}")
+    print(f"Validation Loss: {valid_losses[-1]}, Validation F1: {valid_f1[-1]}")
+    print(f"Test Loss: {test_losses}, Test F1: {test_f1}")
+
+    save_model(best_model, "best_model.pth")
+
+    
 
     
 if __name__ == "__main__":
