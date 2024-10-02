@@ -148,7 +148,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
     for epoch in range(num_epochs):
         model.train()
         train_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
-        for i, (mdt, ost, label) in enumerate(train_data_loader):
+        for mdt, ost, label in train_data_loader:
             # Convert input data to Float
             mdt = mdt.float()
             ost = ost.float()
@@ -223,11 +223,13 @@ def main():
     training_scaler = train_samples.scaler
     devices = train_samples.devices
     train_loader = DataLoader(train_samples, batch_size=1, shuffle=True)
+    print('train set size: ', len(train_samples))
     test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler)
     validation_size = int(0.2*len(test_samples))
     test_size = len(test_samples) - validation_size
     test_dataset, validation_dataset = torch.utils.data.random_split(test_samples, [test_size, validation_size])
     validation_loader = DataLoader(validation_dataset, batch_size=1, shuffle=True)
+    print('validation set size: ', len(validation_dataset))
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
     model = SensitivityModel(devices,
                              config['model_config']['features'],
