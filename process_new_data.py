@@ -159,22 +159,26 @@ def get_data(model_config, run_txt):
             for interference_level in interference_levels:
                 interference_level_num = int(interference_level.split('_')[-1])
                 interference_level_files = os.listdir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level))
-                configs = []
-                for file in interference_level_files:
-                    if file.endswith('.darshan'):
-                        # file will be in format configname_idx.darshan like debug_config_0.darshan
-                        print(f"Processing file: {file}")
-                        config_name = re.match(r'(.*?)_[0-9].darshan', file).group(1)
-                        if config_name not in configs:
-                            configs.append(config_name)
-                for config in configs:
-                    trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level), config, run_txt, devices)
-                    if interference_level_num == 0:
-                        data['baseline_traces'][config] = trace_df
-                    else:
-                        if interference_level_num not in data['interference_traces']:
-                            data['interference_traces'][interference_level_num] = {}
-                        data['interference_traces'][interference_level_num][config] = trace_df
+                for repitition in interference_level_files:
+                    repitition_files = os.listdir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level, repitition))
+                    configs = []
+                    for file in repitition_files:
+                        if file.endswith('.darshan'):
+                            # file will be in format configname_idx.darshan like debug_config_0.darshan
+                            print(f"Processing file: {file}")
+                            config_name = re.match(r'(.*?)_[0-9].darshan', file).group(1)
+                            if config_name not in configs:
+                                configs.append(config_name)
+                    for config in configs:
+                        trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level, repitition), config, run_txt, devices)
+                        if interference_level_num == 0:
+                            data['baseline_traces'][config] = trace_df
+                        else:
+                            if interference_level_num not in data['interference_traces']:
+                                data['interference_traces'][interference_level_num] = {}
+                            if repitition not in data['interference_traces'][interference_level_num]:
+                                data['interference_traces'][interference_level_num][repitition] = {}
+                            data['interference_traces'][interference_level_num][repitition][config] = trace_df
         elif data_type == 'stats':
             data['stats'] = load_stats_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir))
             devices['mdt'] = [device for device in data['stats'] if 'mdt' in device]
@@ -294,32 +298,33 @@ def create_samples(data, time_window_size, test_size, devices):
         raise ValueError('Time window size must be at least 0.2 seconds')
     
     for interference_level in data['interference_traces']:
-        for config in data['interference_traces'][interference_level]:
-            trace_df = data['interference_traces'][interference_level][config]
-            baseline_trace_df = data['baseline_traces'][config]
-            trace_start_time = trace_df['start'].min()
-            trace_end_time = trace_df['end'].max()
-            num_windows = int((trace_end_time - trace_start_time) / time_window_size)
-            for i in range(num_windows):
-                start_time = trace_start_time + i * time_window_size
-                end_time = trace_start_time + (i + 1) * time_window_size
-                trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
-                if len(trace_df_window) == 0:
-                    continue
-                # get the same operation indices in the baseline trace
-                baseline_trace_df_window = baseline_trace_df.iloc[trace_df_window.index[0]:trace_df_window.index[-1]+1]
-                # get the stats for the same time window
-                stats_df_window = {}
-                # convert start_time and end_time to pd.Timestamp
-                start_time = pd.Timestamp(start_time)
-                end_time = pd.Timestamp(end_time)
-                for device in data['stats']:
-                    stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
-                sample = calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size, devices)
-                if random.random() < test_size:
-                    test_samples.append(sample)
-                else:
-                    train_samples.append(sample)
+        for repitition in data['interference_traces'][interference_level]:
+            for config in data['interference_traces'][interference_level][repitition]:
+                trace_df = data['interference_traces'][interference_level][repitition][config]
+                baseline_trace_df = data['baseline_traces'][config]
+                trace_start_time = trace_df['start'].min()
+                trace_end_time = trace_df['end'].max()
+                num_windows = int((trace_end_time - trace_start_time) / time_window_size)
+                for i in range(num_windows):
+                    start_time = trace_start_time + i * time_window_size
+                    end_time = trace_start_time + (i + 1) * time_window_size
+                    trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
+                    if len(trace_df_window) == 0:
+                        continue
+                    # get the same operation indices in the baseline trace
+                    baseline_trace_df_window = baseline_trace_df.iloc[trace_df_window.index[0]:trace_df_window.index[-1]+1]
+                    # get the stats for the same time window
+                    stats_df_window = {}
+                    # convert start_time and end_time to pd.Timestamp
+                    start_time = pd.Timestamp(start_time)
+                    end_time = pd.Timestamp(end_time)
+                    for device in data['stats']:
+                        stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
+                    sample = calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size, devices)
+                    if random.random() < test_size:
+                        test_samples.append(sample)
+                    else:
+                        train_samples.append(sample)
     print("Sample creation complete.")
     return train_samples, test_samples
 
