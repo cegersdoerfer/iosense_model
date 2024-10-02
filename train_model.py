@@ -110,23 +110,25 @@ def get_metrics(output, label, metrics, num_bins=2):
         metrics['fp'] += ((output > 0.5) & (label == 0)).sum().item()
         metrics['tn'] += ((output <= 0.5) & (label == 0)).sum().item()
         metrics['fn'] += ((output <= 0.5) & (label == 1)).sum().item()
-        metrics['f1'] = metrics['tp'] / (metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn']))
         metrics['acc'] = (metrics['tp'] + metrics['tn']) / (metrics['tp'] + metrics['tn'] + metrics['fp'] + metrics['fn'])
         if metrics['tp'] + metrics['fp'] > 0:
             metrics['prec'] = metrics['tp'] / (metrics['tp'] + metrics['fp'])
         if metrics['tp'] + metrics['fn'] > 0:
             metrics['rec'] = metrics['tp'] / (metrics['tp'] + metrics['fn'])
+        if metrics['tp'] + metrics['tn'] > 0:
+            metrics['f1'] = 2 * (metrics['prec'] * metrics['rec']) / (metrics['prec'] + metrics['rec'])
     else:
         metrics['tp'] += (output == label).sum().item()
         metrics['fp'] += ((output == 0) & (label == 1)).sum().item()
         metrics['tn'] += ((output == 0) & (label == 0)).sum().item()
         metrics['fn'] += ((output == 1) & (label == 0)).sum().item()
-        metrics['f1'] = metrics['tp'] / (metrics['tp'] + 0.5 * (metrics['fp'] + metrics['fn']))
         metrics['acc'] = (metrics['tp'] + metrics['tn']) / (metrics['tp'] + metrics['tn'] + metrics['fp'] + metrics['fn'])
         if metrics['tp'] + metrics['fp'] > 0:
             metrics['prec'] = metrics['tp'] / (metrics['tp'] + metrics['fp'])
         if metrics['tp'] + metrics['fn'] > 0:
             metrics['rec'] = metrics['tp'] / (metrics['tp'] + metrics['fn'])
+        if metrics['prec'] + metrics['rec'] > 0:
+            metrics['f1'] = 2 * (metrics['prec'] * metrics['rec']) / (metrics['prec'] + metrics['rec'])
     return metrics
 
 
