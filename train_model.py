@@ -10,7 +10,7 @@ from model_training.loader import MetricsDataset
 
 
 class SensitivityModel(nn.Module):
-    def __init__(self, devices, features, hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=16):
+    def __init__(self, devices, features, hidden_size=16, global_hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=16):
         self.devices = devices
         self.features = features
         super(SensitivityModel, self).__init__()
@@ -27,9 +27,9 @@ class SensitivityModel(nn.Module):
         self.ost_fc = nn.Linear(ost_input_width, server_emb_size)
         self.ost_fc_hidden = nn.Linear(server_emb_size, hidden_size)
         self.ost_fc_out = nn.Linear(hidden_size, server_out_size)
-        self.fc_bridge = nn.Linear(len(devices['mdt'])*server_out_size + len(devices['ost'])*server_out_size, hidden_size)
+        self.fc_bridge = nn.Linear(len(devices['mdt'])*server_out_size + len(devices['ost'])*server_out_size, global_hidden_size)
         #self.fc_hidden = nn.Linear(hidden_size, hidden_size)
-        self.fc_out = nn.Linear(hidden_size, output_size)
+        self.fc_out = nn.Linear(global_hidden_size, output_size)
         self.relu = nn.ReLU()
         if output_size == 1:
             self.last_activation = nn.Sigmoid()
