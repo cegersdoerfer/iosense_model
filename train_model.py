@@ -38,7 +38,6 @@ class SensitivityModel(nn.Module):
 
     def mdt_forward(self, mdt):
         mdt = mdt.view(-1, mdt.shape[-1])
-        print('mdt shape: ', mdt.shape)
         mdt = self.mdt_fc(mdt)
         mdt = self.relu(mdt)
         mdt = self.mdt_fc_hidden(mdt)
@@ -106,7 +105,7 @@ def get_data_paths(config):
 
 
 def get_metrics(output, label, num_bins=2):
-    metrics = {}
+    metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
     if num_bins == 2:
         metrics['tp'] += ((output > 0.5) & (label == 1)).sum().item()
         metrics['fp'] += ((output > 0.5) & (label == 0)).sum().item()
