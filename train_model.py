@@ -14,9 +14,9 @@ class SensitivityModel(nn.Module):
         self.devices = devices
         self.features = features
         super(SensitivityModel, self).__init__()
-        mdt_input_width = len(features['stats']) + len(features['mdt_trace']) + 1
+        mdt_input_width = len(features['stats']) + len(features['mdt_trace'])
         print('mdt_input_width: ', mdt_input_width)
-        ost_input_width = len(features['stats']) + len(features['ost_trace']) + 1
+        ost_input_width = len(features['stats']) + len(features['ost_trace'])
         print('ost_input_width: ', ost_input_width)
         self.server_out_size = server_out_size
         self.mdt_fc = nn.Linear(mdt_input_width, server_emb_size)
