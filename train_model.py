@@ -121,6 +121,8 @@ def get_metrics(output, label, metrics, num_bins=2):
             metrics['rec'] = 0
         if metrics['prec'] + metrics['rec'] > 0:
             metrics['f1'] = 2 * (metrics['prec'] * metrics['rec']) / (metrics['prec'] + metrics['rec'])
+        else:
+            metrics['f1'] = 0
     else:
         metrics['tp'] += (output == label).sum().item()
         metrics['fp'] += ((output == 0) & (label == 1)).sum().item()
@@ -137,6 +139,8 @@ def get_metrics(output, label, metrics, num_bins=2):
             metrics['rec'] = 0
         if metrics['prec'] + metrics['rec'] > 0:
             metrics['f1'] = 2 * (metrics['prec'] * metrics['rec']) / (metrics['prec'] + metrics['rec'])
+        else:
+            metrics['f1'] = 0
     return metrics
 
 
