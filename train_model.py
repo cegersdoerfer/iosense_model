@@ -10,7 +10,7 @@ from model_training.loader import MetricsDataset
 
 
 class SensitivityModel(nn.Module):
-    def __init__(self, devices, features, hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=8):
+    def __init__(self, devices, features, hidden_size=16, server_out_size = 8, output_size=1, server_emb_size=16):
         self.devices = devices
         self.features = features
         super(SensitivityModel, self).__init__()
@@ -149,7 +149,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
         criterion = nn.BCELoss()
     else:
         criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
     train_losses = []
     valid_losses = []
     train_f1 = []
