@@ -197,7 +197,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
                 valid_metrics = get_metrics(output, label, valid_metrics, num_bins=num_bins)
         valid_losses.append(valid_loss)
         valid_f1.append(valid_metrics['f1'])
-        print(f"Validation metrics: {valid_metrics}")
+        print(f"Validation metrics: {valid_metrics}\n\n")
         if valid_loss < best_loss:
             best_loss = valid_loss
             best_model = model

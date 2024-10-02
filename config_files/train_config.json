@@ -5,6 +5,6 @@
     },
     "test": {
         "workloads": ["IO500"],
-        "window_sizes": [0.2]
+        "window_sizes": [0.4]
     }
 }
