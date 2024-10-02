@@ -20,6 +20,7 @@ class SensitivityModel(nn.Module):
         print('ost_input_width: ', ost_input_width)
         self.server_out_size = server_out_size
         self.mdt_fc = nn.Linear(mdt_input_width, server_emb_size)
+        print('mdt_fc: ', self.mdt_fc)
         self.mdt_fc_hidden = nn.Linear(server_emb_size, hidden_size)
         self.mdt_fc_out = nn.Linear(hidden_size, server_out_size)
         
@@ -37,6 +38,7 @@ class SensitivityModel(nn.Module):
 
     def mdt_forward(self, mdt):
         mdt = mdt.view(-1, mdt.shape[-1])
+        print('mdt shape: ', mdt.shape)
         mdt = self.mdt_fc(mdt)
         mdt = self.relu(mdt)
         mdt = self.mdt_fc_hidden(mdt)
