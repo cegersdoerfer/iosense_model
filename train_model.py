@@ -151,6 +151,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
     train_f1 = []
     valid_f1 = []
     best_model = model
+    best_loss = float('inf')
     loss_steps = 5000
     num_epochs = 10
     train_loss = 0
