@@ -173,6 +173,9 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
         valid_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
         with torch.no_grad():
             for mdt, ost, label in validation_data_loader:
+                mdt = mdt.float()
+                ost = ost.float()
+                label = label.float()
                 output = model(mdt, ost)
                 loss = criterion(output, label)
                 valid_loss += loss.item()
