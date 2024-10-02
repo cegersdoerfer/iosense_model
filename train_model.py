@@ -145,6 +145,10 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
         model.train()
         train_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
         for i, (mdt, ost, label) in enumerate(train_data_loader):
+            # Convert input data to Float
+            mdt = mdt.float()
+            ost = ost.float()
+            label = label.float()
             optimizer.zero_grad()
             output = model(mdt, ost)
             loss = criterion(output, label)
@@ -183,6 +187,10 @@ def test_model(test_data_loader, model, criterion):
     test_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
     with torch.no_grad():
         for mdt, ost, label in test_data_loader:
+            # Convert input data to Float
+            mdt = mdt.float()
+            ost = ost.float()
+            label = label.float()
             output = model(mdt, ost)
             loss = criterion(output, label)
             test_loss += loss.item()
