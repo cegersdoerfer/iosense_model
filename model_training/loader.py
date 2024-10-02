@@ -165,6 +165,13 @@ class MetricsDataset(Dataset):
         print(f"postive samples: {np.sum(self.target)}")
         print(f"negative samples: {len(self.target) - np.sum(self.target)}")
         self.ost_features, self.mdt_features, self.scaler = scale(self.mdt_features, self.ost_features, self.scaler, save_scaler='scaler' if self.train else None)
+        self.plot_data()
+
+    def plot_data(self):
+        plt.figure()
+        plt.hist(self.target, bins=self.num_bins)
+        plt.savefig('target_distribution.png')
+        plt.close()
 
     def __len__(self):
         return len(self.target)
