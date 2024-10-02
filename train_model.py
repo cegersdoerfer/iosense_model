@@ -125,8 +125,12 @@ def get_metrics(output, label, metrics, num_bins=2):
         metrics['acc'] = (metrics['tp'] + metrics['tn']) / (metrics['tp'] + metrics['tn'] + metrics['fp'] + metrics['fn'])
         if metrics['tp'] + metrics['fp'] > 0:
             metrics['prec'] = metrics['tp'] / (metrics['tp'] + metrics['fp'])
+        else:
+            metrics['prec'] = 0
         if metrics['tp'] + metrics['fn'] > 0:
             metrics['rec'] = metrics['tp'] / (metrics['tp'] + metrics['fn'])
+        else:
+            metrics['rec'] = 0
         if metrics['prec'] + metrics['rec'] > 0:
             metrics['f1'] = 2 * (metrics['prec'] * metrics['rec']) / (metrics['prec'] + metrics['rec'])
     return metrics
