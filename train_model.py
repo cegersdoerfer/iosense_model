@@ -104,8 +104,7 @@ def get_data_paths(config):
 
 
 
-def get_metrics(output, label, num_bins=2):
-    metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
+def get_metrics(output, label, metrics, num_bins=2):
     if num_bins == 2:
         metrics['tp'] += ((output > 0.5) & (label == 1)).sum().item()
         metrics['fp'] += ((output > 0.5) & (label == 0)).sum().item()
@@ -156,7 +155,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
-            train_metrics = get_metrics(output, label, num_bins=num_bins)
+            train_metrics = get_metrics(output, label, train_metrics, num_bins=num_bins)
             if idx % loss_steps == 0:   
                 print(f"Epoch {epoch+1}/{num_epochs}, Step {idx+1}/{len(train_data_loader)}, Loss: {train_loss/loss_steps:.4f}")
                 train_loss = 0
@@ -173,7 +172,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
                 output = model(mdt, ost)
                 loss = criterion(output, label)
                 valid_loss += loss.item()
-                valid_metrics = get_metrics(output, label, num_bins=num_bins)
+                valid_metrics = get_metrics(output, label, valid_metrics, num_bins=num_bins)
         valid_losses.append(valid_loss)
         valid_f1.append(valid_metrics['f1'])
         print(f"Validation metrics: {valid_metrics}")
@@ -195,7 +194,7 @@ def test_model(test_data_loader, model, criterion):
             output = model(mdt, ost)
             loss = criterion(output, label)
             test_loss += loss.item()
-            test_metrics = get_metrics(output, label, num_bins=2)
+            test_metrics = get_metrics(output, label, test_metrics, num_bins=2)
         print(f"Test metrics: {test_metrics}")
     return test_loss, test_metrics
 
