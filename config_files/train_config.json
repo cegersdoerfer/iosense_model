@@ -4,7 +4,7 @@
         "window_sizes": [2, 4, 8]
     },
     "test": {
-        "workloads": ["amrex"],
+        "workloads": ["IO500"],
         "window_sizes": [4]
     }
 }
