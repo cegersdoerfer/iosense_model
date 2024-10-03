@@ -50,6 +50,9 @@ def parse_darshan_txt(txt_output, devices):
             # Check if the line has the expected number of fields
             if len(parts) < 8:
                 continue
+            current_api = parts[0]
+            if not "POSIX" in current_api:
+                continue
             operation = parts[2]
             operations.append(operation)
             ranks.append(current_rank)
