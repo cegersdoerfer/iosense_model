@@ -96,6 +96,7 @@ def parse_darshan_txt(txt_output, devices):
     for i in devices['ost']:
         int_id = int(i.replace('ost_', ''))
         dataframe_columns[f'ost_{int_id}'] = osts[:, int_id]
+    
 
     # skip mdt for now and treat it as a single device
     #for i in devices['mdt']:
@@ -103,7 +104,8 @@ def parse_darshan_txt(txt_output, devices):
     #    dataframe_columns[f'mdt_{int_id}'] = mdt[:, int_id]
 
     dataframe_columns['mdt_0'] = mdt[:, 0]
-
+    for col in dataframe_columns:
+        print(col, len(dataframe_columns[col]))
     df = pd.DataFrame(dataframe_columns)
     df = pd.DataFrame.from_dict(df).sort_values(by=['start'])
     df.reset_index(inplace=True)
