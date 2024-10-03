@@ -28,7 +28,6 @@ def parse_darshan_txt(txt_output, devices):
 
     # Parse the txt output
     for line in txt_output.splitlines():
-        print(line)
         # Extract start time
         if line.startswith("# start_time:"):
             trace_start_time = float(line.split(':')[1].strip())
