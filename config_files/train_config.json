@@ -5,6 +5,6 @@
     },
     "test": {
         "workloads": ["amrex"],
-        "window_sizes": [0.4, 0.6]
+        "window_sizes": [ 0.6]
     }
 }
