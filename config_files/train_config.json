@@ -1,6 +1,6 @@
 {
     "train": {
-        "workloads": ["IO500"],
+        "workloads": ["amrex"],
         "window_sizes": [0.2, 0.4, 0.6, 0.8, 1.0, 2, 4, 8]
     },
     "test": {
