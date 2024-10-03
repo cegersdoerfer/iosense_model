@@ -74,24 +74,31 @@ class SensitivityModel(nn.Module):
 
 def get_workload_data_paths(config, workload, train=True):
     data_root = os.path.join(IOSENSE_ROOT, config['data_config']['output_dir'])
-    print("getting data paths for ", workload)
     sample_paths = {}
     timestamp_dirs = os.listdir(os.path.join(data_root, workload))
-    # dirs are in the format of YYYY-MM-DD_HH-MM-SS
-    # get the most recent timestamp_dir
-    timestamp_dirs.sort()
-    timestamp_dir = timestamp_dirs[-1]
-    print("timestamp_dir: ", timestamp_dir)
-    for file in os.listdir(os.path.join(data_root, workload, timestamp_dir)):
-        if train:
-            string_check = 'train'
-        else:
-            string_check = 'test'
-        if string_check in file:
-            # files are in the format of train_samples_[window_size].json
-            window_size = file.split('_')[2]
-            window_size = float(window_size.replace('.json', ''))
-            sample_paths[window_size] = os.path.join(data_root, workload, timestamp_dir, file)
+    dirs_list = []
+    if config['train_config']['load_setting'] == 'most_recent':
+        # dirs are in the format of YYYY-MM-DD_HH-MM-SS
+        # get the most recent timestamp_dir
+        timestamp_dirs.sort()
+        timestamp_dir = timestamp_dirs[-1]
+        dirs_list.append(timestamp_dir)
+    else:
+        dirs_list = timestamp_dirs
+
+    for timestamp_dir in dirs_list:
+        for file in os.listdir(os.path.join(data_root, workload, timestamp_dir)):
+            if train:
+                string_check = 'train'
+            else:
+                string_check = 'test'
+            if string_check in file:
+                # files are in the format of train_samples_[window_size].json
+                window_size = file.split('_')[2]
+                window_size = float(window_size.replace('.json', ''))
+                if window_size not in sample_paths:
+                    sample_paths[window_size] = []
+                sample_paths[window_size].append(os.path.join(data_root, workload, timestamp_dir, file))
     return sample_paths
     
 

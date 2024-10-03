@@ -87,8 +87,11 @@ class MetricsDataset(Dataset):
                 
                 # load the data file for the current window size
                 print(f"Loading data from {workload_dirs[workload][window_size]}")
-                with open(workload_dirs[workload][window_size], 'r') as f:
-                    workload_data = json.load(f)
+                workload_data = []
+                for file_path in workload_dirs[workload][window_size]:
+                    with open(file_path, 'r') as f:
+                        samples_list = json.load(f)
+                    workload_data.extend(samples_list)
                 
                 self.devices = get_devices(workload_data[0])
                 print(f"Devices: {self.devices}")
