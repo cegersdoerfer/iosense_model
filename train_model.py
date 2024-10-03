@@ -74,12 +74,14 @@ class SensitivityModel(nn.Module):
 
 def get_workload_data_paths(config, workload, train=True):
     data_root = os.path.join(IOSENSE_ROOT, config['data_config']['output_dir'])
+    print("getting data paths for ", workload)
     sample_paths = {}
     timestamp_dirs = os.listdir(os.path.join(data_root, workload))
     # dirs are in the format of YYYY-MM-DD_HH-MM-SS
     # get the most recent timestamp_dir
     timestamp_dirs.sort()
     timestamp_dir = timestamp_dirs[-1]
+    print("timestamp_dir: ", timestamp_dir)
     for file in os.listdir(os.path.join(data_root, workload, timestamp_dir)):
         if train:
             string_check = 'train'
