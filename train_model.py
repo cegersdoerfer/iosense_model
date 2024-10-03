@@ -77,7 +77,16 @@ def get_workload_data_paths(config, workload, train=True):
     sample_paths = {}
     timestamp_dirs = os.listdir(os.path.join(data_root, workload))
     dirs_list = []
-    if config['train_config']['load_setting'] == 'most_recent':
+    if train:
+        set_string = 'train'
+    else:
+        set_string = 'test'
+    if 'load_setting' in config['train_config'][set_string]:
+        load_setting = config['train_config'][set_string]['load_setting']
+    else:
+        load_setting = 'most_recent'
+    print('load_setting: ', load_setting)
+    if load_setting == 'most_recent':
         # dirs are in the format of YYYY-MM-DD_HH-MM-SS
         # get the most recent timestamp_dir
         timestamp_dirs.sort()
