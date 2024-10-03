@@ -5,7 +5,7 @@
     },
     "test": {
         "workloads": ["IO500"],
-        "load_setting": "aggregate",
+        "load_setting": "most_recent",
         "window_sizes": [0.2, 0.4, 0.6, 0.8, 1.0, 2, 4, 8]
     }
 }
