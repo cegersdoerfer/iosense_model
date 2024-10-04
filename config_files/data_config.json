@@ -1,7 +1,7 @@
 {
     "workload": "IO500",
-    "time_stamp_dir": "2024-10-03_14-09-05",
+    "time_stamp_dir": "2024-10-04_11-02-35",
     "output_dir": "processed_data",
     "test_size": 0.2,
-    "window_sizes": [0.2, 0.4, 0.6, 0.8, 1.0, 2, 4, 8]
+    "window_sizes": [0.2, 0.4, 0.6, 0.8, 1.0, 2, 4, 8, 10, 15]
 }
