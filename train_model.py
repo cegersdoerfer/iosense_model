@@ -100,7 +100,7 @@ def get_workload_data_paths(config, workload, train=True):
             if train:
                 string_check = 'train'
             else:
-                string_check = 'test'
+                string_check = 'train'
             if string_check in file:
                 # files are in the format of train_samples_[window_size].json
                 window_size = file.split('_')[2]
