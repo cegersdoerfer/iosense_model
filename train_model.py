@@ -80,7 +80,7 @@ def get_workload_data_paths(config, workload, train=True):
     if train:
         set_string = 'train'
     else:
-        set_string = 'test'
+        set_string = 'train'
     if 'load_setting' in config['train_config'][set_string]:
         load_setting = config['train_config'][set_string]['load_setting']
     else:
