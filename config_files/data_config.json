@@ -1,6 +1,6 @@
 {
-    "workload": "amrex",
-    "time_stamp_dir": "2024-10-04_22-24-39",
+    "workload": "IO500",
+    "time_stamp_dir": "2024-10-05_16-57-18",
     "output_dir": "processed_data",
     "test_size": 0.2,
     "window_sizes": [0.2, 0.4, 0.6, 0.8, 1.0, 2, 4, 8, 10, 15]
