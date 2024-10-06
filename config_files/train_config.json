@@ -2,11 +2,11 @@
     "train": {
         "workloads": ["IO500"],
         "load_setting": "most_recent",
-        "window_sizes": [0.4]
+        "window_sizes": [0.2]
     },
     "test": {
         "workloads": ["amrex"],
         "load_setting": "most_recent",
-        "window_sizes": [0.4]
+        "window_sizes": [0.2]
     }
 }
