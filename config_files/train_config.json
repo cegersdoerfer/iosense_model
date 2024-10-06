@@ -1,7 +1,7 @@
 {
     "train": {
         "workloads": ["IO500"],
-        "load_setting": "most_recent",
+        "load_setting": "aggregate",
         "window_sizes": [0.2]
     },
     "test": {
