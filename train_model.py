@@ -167,7 +167,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
         criterion = nn.BCELoss()
     else:
         criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     train_losses = []
     valid_losses = []
     train_f1 = []
