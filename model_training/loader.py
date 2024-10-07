@@ -63,7 +63,7 @@ def get_devices(workload_data_sample):
 
 
 class MetricsDataset(Dataset):
-    def __init__(self, workload_dirs, features, bin_thresholds=[2.5], train=True, scaler=None, augment=False, window_sizes=None):
+    def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=False, window_sizes=None):
         self.workload_dirs = workload_dirs
         self.features = features
         self.augment = augment
