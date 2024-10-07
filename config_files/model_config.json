@@ -7,5 +7,5 @@
     "hidden_size": 4,
     "server_out_size": 4,
     "output_size": 1,
-    "server_emb_size": 8
+    "server_emb_size": 4
 }
