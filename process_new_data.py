@@ -369,6 +369,7 @@ def main():
     args = parser.parse_args()
     print("Starting main process...")
     data_config = load_data_config()
+    data_config['time_stamp_dir'] = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload']))
     data_config['cluster_config'] = load_cluster_config()
     window_sizes = data_config['window_sizes']
     for window_size in window_sizes:
@@ -377,11 +378,7 @@ def main():
         data, devices = get_data(data_config, args.run_txt)
         print(f"Devices: {devices}")
         train_samples, test_samples = create_samples(data, window_size, data_config['test_size'], devices)
-        if data_config['time_stamp_dir'] == 'most_recent':
-            print("Getting most recent time stamp dir...")
-            time_stamp_dir = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload']))
-        else:
-            time_stamp_dir = data_config['time_stamp_dir']
+        time_stamp_dir = data_config['time_stamp_dir']
         save_samples(train_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], time_stamp_dir, f'train_samples_{window_size}.json'))
         save_samples(test_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], time_stamp_dir, f'test_samples_{window_size}.json'))
     print("Main process complete.")
