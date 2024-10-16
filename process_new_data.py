@@ -18,8 +18,11 @@ def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
         if not run_txt:
             if file.endswith('.darshan') and config_name in file:
                 print(f"Processing file: {file}")
-                darshan_txt = subprocess.check_output(["darshan-dxt-parser", "--show-incomplete", os.path.join(dir_path, file)])
-                darshan_txt = darshan_txt.decode('utf-8')
+                txt_file = file.replace('.darshan', '.txt')
+                command = f"darshan-dxt-parser --show-incomplete {os.path.join(dir_path, file)} > {os.path.join(dir_path, txt_file)}"
+                subprocess.run(command, shell=True)
+                with open(os.path.join(dir_path, txt_file), 'r') as f:
+                    darshan_txt = f.read()
                 trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt, devices)
                 traces.append(trace_df)
         else:
@@ -151,7 +154,7 @@ def get_data(model_config, run_txt):
     data_types = ['stats', 'darshan_logs']
     workload = model_config['workload']
     time_stamp_dir = model_config['time_stamp_dir']
-    data_dir = model_config['cluster_config']['data_dir']
+    data_dir = os.path.join(IOSENSE_ROOT, "data")
     devices = {'mdt': [], 'ost': []}
     for data_type in data_types:
         if data_type == 'darshan_logs':
@@ -354,6 +357,12 @@ def save_samples(samples, output_file):
         json.dump(samples, f)
     print("Samples saved.")
 
+def get_most_recent_time_stamp_dir(data_dir):
+    timestamps = os.listdir(os.path.join(data_dir, 'darshan_logs'))
+    timestamps.sort()
+    return timestamps[-1]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_txt', action='store_true', help='Run the script with txt files instead of darshan files')
@@ -368,8 +377,12 @@ def main():
         data, devices = get_data(data_config, args.run_txt)
         print(f"Devices: {devices}")
         train_samples, test_samples = create_samples(data, window_size, data_config['test_size'], devices)
-        save_samples(train_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], data_config['time_stamp_dir'], f'train_samples_{window_size}.json'))
-        save_samples(test_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], data_config['time_stamp_dir'], f'test_samples_{window_size}.json'))
+        if data_config['time_stamp_dir'] == 'most_recent':
+            time_stamp_dir = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload']))
+        else:
+            time_stamp_dir = data_config['time_stamp_dir']
+        save_samples(train_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], time_stamp_dir, f'train_samples_{window_size}.json'))
+        save_samples(test_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], time_stamp_dir, f'test_samples_{window_size}.json'))
     print("Main process complete.")
 
 if __name__ == "__main__":
