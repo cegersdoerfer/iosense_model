@@ -369,7 +369,7 @@ def main():
     args = parser.parse_args()
     print("Starting main process...")
     data_config = load_data_config()
-    data_config['time_stamp_dir'] = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload']))
+    data_config['time_stamp_dir'] = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, "data", data_config['workload']))
     data_config['cluster_config'] = load_cluster_config()
     window_sizes = data_config['window_sizes']
     for window_size in window_sizes:
