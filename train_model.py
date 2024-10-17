@@ -80,7 +80,7 @@ def get_workload_data_paths(config, workload, train=True):
     if train:
         set_string = 'train'
     else:
-        set_string = 'train'
+        set_string = 'test'
     if 'load_setting' in config['train_config'][set_string]:
         load_setting = config['train_config'][set_string]['load_setting']
     else:
@@ -175,7 +175,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
     best_model = model
     best_loss = float('inf')
     loss_steps = 5000
-    num_epochs = 30
+    num_epochs = 50
     train_loss = 0
     idx = 0
     for epoch in range(num_epochs):
@@ -258,15 +258,15 @@ def main():
     train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'], window_sizes=config['train_config']['train']['window_sizes'])
     training_scaler = train_samples.scaler
     devices = train_samples.devices
-    train_loader = DataLoader(train_samples, batch_size=128, shuffle=True)
+    train_loader = DataLoader(train_samples, batch_size=128, shuffle=True, generator=torch.Generator().manual_seed(42))
     print('train set size: ', len(train_samples))
     test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler, window_sizes=config['train_config']['test']['window_sizes'])
     validation_size = int(0.8*len(test_samples))
     test_size = len(test_samples) - validation_size
-    test_dataset, validation_dataset = torch.utils.data.random_split(test_samples, [test_size, validation_size])
-    validation_loader = DataLoader(validation_dataset, batch_size=1, shuffle=True)
+    test_dataset, validation_dataset = torch.utils.data.random_split(test_samples, [test_size, validation_size], generator=torch.Generator().manual_seed(42))
+    validation_loader = DataLoader(validation_dataset, batch_size=1, shuffle=True, generator=torch.Generator().manual_seed(42))
     print('validation set size: ', len(validation_dataset))
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, generator=torch.Generator().manual_seed(42))
     model = SensitivityModel(devices,
                              config['model_config']['features'],
                              hidden_size=config['model_config']['hidden_size'], 
