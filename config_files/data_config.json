@@ -1,5 +1,5 @@
 {
-    "workload": "macsio",
+    "workload": "IO500",
     "time_stamp_dir": "most_recent",
     "output_dir": "processed_data",
     "test_size": 0.2,

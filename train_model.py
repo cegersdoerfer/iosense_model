@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from utils.config import load_model_config, load_data_config, load_train_config, IOSENSE_ROOT
 from model_training.loader import MetricsDataset
+import json
 
 
 
@@ -175,11 +176,12 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
     best_model = model
     best_loss = float('inf')
     loss_steps = 5000
-    num_epochs = 50
+    num_epochs = 100
     train_loss = 0
     idx = 0
     for epoch in range(num_epochs):
         model.train()
+        train_loss = 0
         train_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
         for mdt, ost, label in train_data_loader:
             # Convert input data to Float
@@ -198,7 +200,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
                 train_loss = 0
             idx += 1
         print(f"Training metrics: {train_metrics}")
-        train_losses.append(train_loss)
+        train_losses.append(train_loss/len(train_data_loader))
         train_f1.append(train_metrics['f1'])
 
         model.eval()
@@ -213,7 +215,7 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
                 loss = criterion(output, label)
                 valid_loss += loss.item()
                 valid_metrics = get_metrics(output, label, valid_metrics, num_bins=num_bins)
-        valid_losses.append(valid_loss)
+        valid_losses.append(valid_loss/len(validation_data_loader))
         valid_f1.append(valid_metrics['f1'])
         print(f"Validation metrics: {valid_metrics}\n\n")
         if valid_loss < best_loss:
@@ -246,6 +248,23 @@ def load_model(model, path):
     model.load_state_dict(torch.load(path))
     return model
 
+def save_metrics(train_losses, train_f1, valid_losses, valid_f1, test_window_size):
+    metrics_file = 'metrics.json'
+    # load metrics file if it exists
+    if os.path.exists(metrics_file):
+        with open(metrics_file, 'r') as f:
+            metrics = json.load(f)
+    else:
+        metrics = {}
+    metrics[test_window_size] = {
+        'train_losses': train_losses,
+        'train_f1': train_f1,
+        'valid_losses': valid_losses,
+        'valid_f1': valid_f1
+    }
+    with open(metrics_file, 'w') as f:
+        json.dump(metrics, f)
+
 def main():
     model_config = load_model_config()
     train_config = load_train_config()
@@ -254,35 +273,47 @@ def main():
               "train_config": train_config,
               "data_config": data_config
     }
-    train_sample_paths, test_sample_paths = get_data_paths(config)
-    train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'], window_sizes=config['train_config']['train']['window_sizes'])
-    training_scaler = train_samples.scaler
-    devices = train_samples.devices
-    train_loader = DataLoader(train_samples, batch_size=128, shuffle=True, generator=torch.Generator().manual_seed(42))
-    print('train set size: ', len(train_samples))
-    test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler, window_sizes=config['train_config']['test']['window_sizes'])
-    validation_size = int(0.8*len(test_samples))
-    test_size = len(test_samples) - validation_size
-    test_dataset, validation_dataset = torch.utils.data.random_split(test_samples, [test_size, validation_size], generator=torch.Generator().manual_seed(42))
-    validation_loader = DataLoader(validation_dataset, batch_size=1, shuffle=True, generator=torch.Generator().manual_seed(42))
-    print('validation set size: ', len(validation_dataset))
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, generator=torch.Generator().manual_seed(42))
-    model = SensitivityModel(devices,
-                             config['model_config']['features'],
-                             hidden_size=config['model_config']['hidden_size'], 
-                             server_out_size=config['model_config']['server_out_size'], 
-                             output_size=config['model_config']['output_size'], 
-                             server_emb_size=config['model_config']['server_emb_size'])
-    print(model)
-    
-    train_losses, train_f1, valid_losses, valid_f1, best_model, criterion = train_model(train_loader, validation_loader, model)
-    test_losses, test_f1 = test_model(test_loader, best_model, criterion)
+    #test_window_size_vals = [0.2, 0.4, 0.6, 0.8, 1.0, 2, 4, 8, 10, 15]
+    test_window_size_vals = [0.4]
+    for i, test_window_size in enumerate(test_window_size_vals):
+        #make train window size the 3 closest values to test_window_size
+        if i == 0:
+            train_window_sizes = test_window_size_vals[:i+3]
+        elif i == len(test_window_size_vals) - 1:
+            train_window_sizes = test_window_size_vals[i-2:]
+        else:
+            train_window_sizes = test_window_size_vals[i-1:i+2]
+        config['train_config']['train']['window_sizes'] = train_window_sizes
+        config['train_config']['test']['window_sizes'] = [test_window_size]
+        train_sample_paths, test_sample_paths = get_data_paths(config)
+        train_samples = MetricsDataset(train_sample_paths, train=True, features=config['model_config']['features'], window_sizes=config['train_config']['train']['window_sizes'])
+        training_scaler = train_samples.scaler
+        devices = train_samples.devices
+        train_loader = DataLoader(train_samples, batch_size=128, shuffle=True, generator=torch.Generator().manual_seed(42))
+        print('train set size: ', len(train_samples))
+        test_samples = MetricsDataset(test_sample_paths, train=False, features=config['model_config']['features'], scaler=training_scaler, window_sizes=config['train_config']['test']['window_sizes'])
+        validation_loader = DataLoader(test_samples, batch_size=1, shuffle=True, generator=torch.Generator().manual_seed(42))
+        print('validation set size: ', len(validation_loader))
+        test_loader = DataLoader(test_samples, batch_size=1, shuffle=True, generator=torch.Generator().manual_seed(42))
+        model = SensitivityModel(devices,
+                                config['model_config']['features'],
+                                hidden_size=config['model_config']['hidden_size'], 
+                                server_out_size=config['model_config']['server_out_size'], 
+                                output_size=config['model_config']['output_size'], 
+                                server_emb_size=config['model_config']['server_emb_size'])
+        print(model)
+        
+        train_losses, train_f1, valid_losses, valid_f1, best_model, criterion = train_model(train_loader, validation_loader, model)
+        save_metrics(train_losses, train_f1, valid_losses, valid_f1, test_window_size)
 
-    print(f"Train Loss: {train_losses[-1]}, Train F1: {train_f1[-1]}")
-    print(f"Validation Loss: {valid_losses[-1]}, Validation F1: {valid_f1[-1]}")
-    print(f"Test Loss: {test_losses}, Test F1: {test_f1}")
+        test_losses, test_f1 = test_model(test_loader, best_model, criterion)
 
-    save_model(best_model, "best_model.pth")
+        print(f"Train Loss: {train_losses[-1]}, Train F1: {train_f1[-1]}")
+        print(f"Validation Loss: {valid_losses[-1]}, Validation F1: {valid_f1[-1]}")
+        print(f"Test Loss: {test_losses}, Test F1: {test_f1}")
+        
+
+        save_model(best_model, "best_model.pth")
 
     
 
