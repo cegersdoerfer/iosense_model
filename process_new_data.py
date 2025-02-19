@@ -108,22 +108,18 @@ def load_stats_from_dir(dir_path):
             print(f"Found {len(subdirs)} subdirectories in {folder}")
             for subdir in subdirs:
                 if any([x in subdir for x in ['OST', 'MDT']]):
-                    # dirs will be in fsname_[MDT|OST][xxxx].log, like hasanfs-MDT0000.log, extract MDT or OST and the number in xxxx
-                    match = re.match(r'.*?-(MDT[0-9]+|OST[0-9]+)\.log', subdir)
+                    # dirs will be in fsname_[MDT|OST][xxxx].log, like hasanfs-MDT0000.log, extract MDT or OST and hex number in xxxx
+                    match = re.match(r'.*?-((?:MDT|OST)([0-9A-Fa-f]{4}))\.log', subdir)
                     if match:
                         print(f"Found match: {match.group(0)}")
                         id = match.group(1)
+                        hex_num = match.group(2)
                         if 'MDT' in id:
-                            id = id.replace('MDT', '')
+                            id = str(int(hex_num, 16))  # Convert hex to decimal
                             type_string = 'mdt'
                         else:
-                            id = id.replace('OST', '')
+                            id = str(int(hex_num, 16))  # Convert hex to decimal
                             type_string = 'ost'
-                        id = id.lstrip('0')
-                        if id == '':
-                            id = '0'
-                        else:
-                            id = int(id)
                         id = f'{type_string}_{id}'
 
                         print(f"Processing subdir: {subdir}, ID: {id}")
