@@ -47,7 +47,7 @@ def parse_darshan_txt(txt_output, devices):
         if not line.startswith("#") and current_file_id and current_rank:
             parts = line.split()
             # Check if the line has the expected number of fields
-            if len(parts) < 8:
+            if len(parts) < 9:
                 continue
             current_api = parts[0]
             if not "POSIX" in current_api:
@@ -68,18 +68,17 @@ def parse_darshan_txt(txt_output, devices):
                 sizes.append(int(parts[5])/1000000)
             starts.append(float(parts[6]) + trace_start_time)
             ends.append(float(parts[7]) + trace_start_time)
-            if len(parts) >= 9:
-                ost_array = np.zeros(ost_width)
-                mdt_array = np.zeros(mdt_width)
-                if operation in ['read', 'write']:  
-                    for ost in parts[9:]:
-                        if ']' in ost:
-                            ost = ost.replace(']', '')
-                        ost_array[int(ost)] = 1
-                else:
-                    mdt_array[0] = 1
-                osts.append(ost_array)
-                mdt.append(mdt_array)
+            ost_array = np.zeros(ost_width)
+            mdt_array = np.zeros(mdt_width)
+            if operation in ['read', 'write']:  
+                for ost in parts[9:]:
+                    if ']' in ost:
+                        ost = ost.replace(']', '')
+                    ost_array[int(ost)] = 1
+            else:
+                mdt_array[0] = 1
+            osts.append(ost_array)
+            mdt.append(mdt_array)
 
     osts = np.array(osts)
     mdt = np.array(mdt)
