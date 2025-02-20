@@ -24,7 +24,8 @@ def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
                 with open(os.path.join(dir_path, txt_file), 'r') as f:
                     darshan_txt = f.read()
                 trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt, devices)
-                traces.append(trace_df)
+                if trace_df is not None:
+                    traces.append(trace_df)
         else:
             if file.endswith('.txt') and config_name in file:
                 print(f"Processing file: {file}")

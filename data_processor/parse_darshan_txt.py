@@ -80,8 +80,12 @@ def parse_darshan_txt(txt_output, devices):
             osts.append(ost_array)
             mdt.append(mdt_array)
 
+    if len(osts) == 0:
+        return None, trace_start_time, full_runtime
+    
     osts = np.array(osts)
     mdt = np.array(mdt)
+    
 
     print(osts.shape)
     print(mdt.shape)
