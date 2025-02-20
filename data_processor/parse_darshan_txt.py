@@ -82,6 +82,9 @@ def parse_darshan_txt(txt_output, devices):
 
     osts = np.array(osts)
     mdt = np.array(mdt)
+
+    print(osts.shape)
+    print(mdt.shape)
                 
     # Create DataFrame
     dataframe_columns = {
