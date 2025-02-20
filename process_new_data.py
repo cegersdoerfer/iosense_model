@@ -42,7 +42,7 @@ def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
         return darshan_df
     else:
         print("No Darshan traces found.")
-        return pd.DataFrame()
+        return None
 
 def process_stats_file(file_path):
     # stats file will have columns: time_stamp, major, minor, device_name, and read_ios, read_merges, sectors_read, read_ticks, write_ios, write_merges, sectors_written, write_ticks, in_flight, io_ticks, time_in_queue, discard_ios, discard_merges, discard_sectors, discard_ticks
@@ -171,6 +171,9 @@ def get_data(model_config, run_txt):
                                 configs.append(config_name)
                     for config in configs:
                         trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level, repitition), config, run_txt, devices)
+                        if trace_df is None:
+                            continue
+
                         if interference_level_num == 0:
                             data['baseline_traces'][config] = trace_df
                         else:
