@@ -184,8 +184,13 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
     # Set device
     if torch.backends.mps.is_available():
         device = torch.device("mps")
+        print("Using MPS")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("Using CUDA")
     else:
         device = torch.device("cpu")
+        print("Using CPU")
     
     model = model.to(device)
     
@@ -251,8 +256,13 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
 def test_model(test_data_loader, model, criterion):
     if torch.backends.mps.is_available():
         device = torch.device("mps")
+        print("Using MPS")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("Using CUDA")
     else:
         device = torch.device("cpu")
+        print("Using CPU")
     
     model = model.to(device)
     model.eval()
