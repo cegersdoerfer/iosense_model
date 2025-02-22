@@ -60,8 +60,6 @@ def get_devices(workload_data_sample):
             
         
 
-
-
 class MetricsDataset(Dataset):
     def __init__(self, workload_dirs, features, bin_thresholds=[2.0], train=True, scaler=None, augment=True, window_sizes=None):
         self.workload_dirs = workload_dirs
@@ -92,6 +90,9 @@ class MetricsDataset(Dataset):
                     with open(file_path, 'r') as f:
                         samples_list = json.load(f)
                     workload_data.extend(samples_list)
+                
+                if len(workload_data) == 0:
+                    continue
                 
                 self.devices = get_devices(workload_data[0])
                 print(f"Devices: {self.devices}")

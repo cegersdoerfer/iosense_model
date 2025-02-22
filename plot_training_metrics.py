@@ -61,5 +61,5 @@ def plot_metrics(json_file_paths):
     plot_metric('Validation F1 Score', average_metrics['valid_f1'], 'Validation F1 Score')
 
 if __name__ == '__main__':
-    json_file_paths = ['metrics.json', 'metrics_macsio.json']
+    json_file_paths = ['metrics.json']
     plot_metrics(json_file_paths)
