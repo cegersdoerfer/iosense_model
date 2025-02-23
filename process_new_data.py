@@ -94,6 +94,8 @@ def process_stats_file(file_path):
     df.reset_index(inplace=True)
     df.drop(columns=['index'], inplace=True)
     print(f"Stats file {file_path} processed.")
+    # show summary statistics
+    print(df.describe())
     return df
 
 def load_stats_from_dir(dir_path):
