@@ -325,6 +325,7 @@ def create_samples(data, time_window_size, test_size, devices):
                     end_time = pd.Timestamp(end_time)
                     for device in data['stats']:
                         stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
+                    print(f"stats_df_window: {stats_df_window}")
                     sample = calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size, devices)
                     if random.random() < test_size:
                         test_samples.append(sample)
