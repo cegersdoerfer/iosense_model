@@ -308,11 +308,16 @@ def create_samples(data, time_window_size, test_size, devices):
                 trace_df = data['interference_traces'][interference_level][repitition][config]
                 baseline_trace_df = data['baseline_traces'][config]
                 trace_start_time = trace_df['start'].min()
+                print(f"trace_start_time: {trace_start_time}")
                 trace_end_time = trace_df['end'].max()
+                print(f"trace_end_time: {trace_end_time}")
                 num_windows = int((trace_end_time - trace_start_time) / time_window_size)
+                print(f"num_windows: {num_windows}")
                 for i in range(num_windows):
                     start_time = trace_start_time + i * time_window_size
+                    print(f"start_time: {start_time}")
                     end_time = trace_start_time + (i + 1) * time_window_size
+                    print(f"end_time: {end_time}")
                     trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
                     if len(trace_df_window) == 0:
                         continue
