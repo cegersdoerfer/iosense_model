@@ -315,7 +315,7 @@ def create_samples(data, time_window_size, test_size, devices):
                 for i in range(num_windows):
                     start_time = trace_start_time + i * time_window_size
                     end_time = trace_start_time + (i + 1) * time_window_size
-                    print(f"Window {i}: {pd.Timestamp.fromtimestamp(start_time)} to {pd.Timestamp.fromtimestamp(end_time)}")
+                    #print(f"Window {i}: {pd.Timestamp.fromtimestamp(start_time)} to {pd.Timestamp.fromtimestamp(end_time)}")
                     trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
                     if len(trace_df_window) == 0:
                         continue
@@ -326,12 +326,12 @@ def create_samples(data, time_window_size, test_size, devices):
                     # convert start_time and end_time to pd.Timestamp
                     start_time = pd.Timestamp.fromtimestamp(start_time)
                     end_time = pd.Timestamp.fromtimestamp(end_time)
-                    print(f"start_time: {start_time}, end_time: {end_time}")
+                    #print(f"start_time: {start_time}, end_time: {end_time}")
                     for device in data['stats']:
-                        print(f"min time_stamp: {data['stats'][device]['time_stamp'].min()}, max time_stamp: {data['stats'][device]['time_stamp'].max()}")
+                        #print(f"min time_stamp: {data['stats'][device]['time_stamp'].min()}, max time_stamp: {data['stats'][device]['time_stamp'].max()}")
                         stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
-                        if len(stats_df_window[device]) != 0:
-                            print(f"stats_df_window[device]: {stats_df_window[device]}")
+                        #if len(stats_df_window[device]) != 0:
+                        #print(f"stats_df_window[device]: {stats_df_window[device]}")
                     sample = calculate_sample(trace_df_window, baseline_trace_df_window, stats_df_window, time_window_size, devices)
                     if random.random() < test_size:
                         test_samples.append(sample)
