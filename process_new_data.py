@@ -299,7 +299,6 @@ def create_samples(data, time_window_size, test_size, devices):
     test_samples = []
     # minimum size is 0.2 seconds
     if time_window_size < 0.2:
-        # throw error
         raise ValueError('Time window size must be at least 0.2 seconds')
     
     for interference_level in data['interference_traces']:
@@ -308,16 +307,15 @@ def create_samples(data, time_window_size, test_size, devices):
                 trace_df = data['interference_traces'][interference_level][repitition][config]
                 baseline_trace_df = data['baseline_traces'][config]
                 trace_start_time = trace_df['start'].min()
-                print(f"trace_start_time: {trace_start_time}")
+                print(f"trace_start_time: {pd.Timestamp.fromtimestamp(trace_start_time)}")
                 trace_end_time = trace_df['end'].max()
-                print(f"trace_end_time: {trace_end_time}")
+                print(f"trace_end_time: {pd.Timestamp.fromtimestamp(trace_end_time)}")
                 num_windows = int((trace_end_time - trace_start_time) / time_window_size)
                 print(f"num_windows: {num_windows}")
                 for i in range(num_windows):
                     start_time = trace_start_time + i * time_window_size
-                    print(f"start_time: {start_time}")
                     end_time = trace_start_time + (i + 1) * time_window_size
-                    print(f"end_time: {end_time}")
+                    print(f"Window {i}: {pd.Timestamp.fromtimestamp(start_time)} to {pd.Timestamp.fromtimestamp(end_time)}")
                     trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
                     if len(trace_df_window) == 0:
                         continue
@@ -328,9 +326,9 @@ def create_samples(data, time_window_size, test_size, devices):
                     # convert start_time and end_time to pd.Timestamp
                     start_time = pd.Timestamp(start_time)
                     end_time = pd.Timestamp(end_time)
-                    print(f"start_time: {start_time}, end_time: {end_time}")
+                    #print(f"start_time: {start_time}, end_time: {end_time}")
                     for device in data['stats']:
-                        print(f"min time_stamp: {data['stats'][device]['time_stamp'].min()}, max time_stamp: {data['stats'][device]['time_stamp'].max()}")
+                        #print(f"min time_stamp: {data['stats'][device]['time_stamp'].min()}, max time_stamp: {data['stats'][device]['time_stamp'].max()}")
                         stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
                         if len(stats_df_window[device]) != 0:
                             print(f"stats_df_window[device]: {stats_df_window[device]}")
