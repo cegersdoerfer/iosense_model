@@ -15,21 +15,36 @@ class SensitivityModel(nn.Module):
         self.devices = devices
         self.features = features
         super(SensitivityModel, self).__init__()
+        self.server_out_size = server_out_size
+
         mdt_input_width = len(features['stats']) + len(features['mdt_trace'])
-        print('mdt_input_width: ', mdt_input_width)
+        if mdt_input_width > 0:
+            print('mdt_input_width: ', mdt_input_width)
+            self.mdt_fc = nn.Linear(mdt_input_width, server_emb_size)
+            self.mdt_fc_out = nn.Linear(server_emb_size, server_out_size)
+        else:
+            self.mdt_fc = None
+            self.mdt_fc_out = None
+
+        
         ost_input_width = len(features['stats']) + len(features['ost_trace'])
         print('ost_input_width: ', ost_input_width)
-        self.server_out_size = server_out_size
-        self.mdt_fc = nn.Linear(mdt_input_width, server_emb_size)
-        print('mdt_fc: ', self.mdt_fc)
-        #self.mdt_fc_hidden = nn.Linear(server_emb_size, hidden_size)
-        self.mdt_fc_out = nn.Linear(server_emb_size, server_out_size)
+        if ost_input_width > 0:
+            print('ost_input_width: ', ost_input_width)
+            self.ost_fc = nn.Linear(ost_input_width, server_emb_size)
+            self.ost_fc_out = nn.Linear(server_emb_size, server_out_size)
+        else:
+            self.ost_fc = None
+            self.ost_fc_out = None
+        if self.mdt_fc is not None and self.ost_fc is not None:
+            self.fc_bridge = nn.Linear(len(devices['mdt'])*server_out_size + len(devices['ost'])*server_out_size, global_hidden_size)
+        elif self.mdt_fc is not None:
+            self.fc_bridge = nn.Linear(len(devices['mdt'])*server_out_size, global_hidden_size)
+        elif self.ost_fc is not None:
+            self.fc_bridge = nn.Linear(len(devices['ost'])*server_out_size, global_hidden_size)
+        else:
+            raise ValueError('No FC layers to bridge the devices')
         
-        self.ost_fc = nn.Linear(ost_input_width, server_emb_size)
-        #self.ost_fc_hidden = nn.Linear(server_emb_size, hidden_size)
-        self.ost_fc_out = nn.Linear(server_emb_size, server_out_size)
-        self.fc_bridge = nn.Linear(len(devices['mdt'])*server_out_size + len(devices['ost'])*server_out_size, global_hidden_size)
-        #self.fc_hidden = nn.Linear(hidden_size, hidden_size)
         self.fc_out = nn.Linear(global_hidden_size, output_size)
         self.relu = nn.ReLU()
         if output_size == 1:
@@ -41,8 +56,6 @@ class SensitivityModel(nn.Module):
         mdt = mdt.view(-1, mdt.shape[-1])
         mdt = self.mdt_fc(mdt)
         mdt = self.relu(mdt)
-        #mdt = self.mdt_fc_hidden(mdt)
-        #mdt = self.relu(mdt)
         mdt = self.mdt_fc_out(mdt)
         mdt = self.relu(mdt)
         mdt = mdt.view(-1, len(self.devices['mdt'])*self.server_out_size)
@@ -52,21 +65,24 @@ class SensitivityModel(nn.Module):
         ost = ost.view(-1, ost.shape[-1])
         ost = self.ost_fc(ost)
         ost = self.relu(ost)
-        #ost = self.ost_fc_hidden(ost)
-        #ost = self.relu(ost)
         ost = self.ost_fc_out(ost)
         ost = self.relu(ost)
         ost = ost.view(-1, len(self.devices['ost'])*self.server_out_size)
         return ost
 
     def forward(self, mdt, ost):
-        mdt = self.mdt_forward(mdt)
-        ost = self.ost_forward(ost)
-        x = torch.cat((mdt, ost), dim=1)
+        if self.mdt_fc:
+            mdt = self.mdt_forward(mdt)
+        if self.ost_fc:
+            ost = self.ost_forward(ost)
+        if self.mdt_fc and self.ost_fc:
+            x = torch.cat((mdt, ost), dim=1)
+        elif self.mdt_fc:
+            x = mdt
+        elif self.ost_fc:
+            x = ost
         x = self.fc_bridge(x)
         x = self.relu(x)
-        #x = self.fc_hidden(x)
-        #x = self.relu(x)
         x = self.fc_out(x)
         x = self.last_activation(x)
         return x
@@ -180,7 +196,7 @@ def get_metrics(output, label, metrics, num_bins=2):
     return metrics
 
 
-def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
+def train_model(train_data_loader, validation_data_loader, model, num_bins=2, ):
     # Set device
     if torch.backends.mps.is_available():
         device = torch.device("mps")
@@ -213,10 +229,11 @@ def train_model(train_data_loader, validation_data_loader, model, num_bins=2):
         model.train()
         train_loss = 0
         train_metrics = {'tp': 0, 'fp': 0, 'tn': 0, 'fn': 0}
+
         for mdt, ost, label in train_data_loader:
             # Convert input data to Float and move to device
-            mdt = mdt.float().to(device)
             ost = ost.float().to(device)
+            mdt = mdt.float().to(device)
             label = label.float().to(device)
             optimizer.zero_grad()
             output = model(mdt, ost)
@@ -424,7 +441,7 @@ def main():
                                 output_size=config['model_config']['output_size'], 
                                 server_emb_size=config['model_config']['server_emb_size'])
         print(model)
-        
+
         train_losses, train_f1, valid_losses, valid_f1, best_model, criterion = train_model(train_loader, validation_loader, model)
         save_metrics(train_losses, train_f1, valid_losses, valid_f1, test_window_size)
 

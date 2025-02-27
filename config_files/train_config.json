@@ -1,11 +1,11 @@
 {
     "train": {
-        "workloads": ["filebench_15_int_3_idx", "IO500_15_nodes_interference"],
-        "load_setting": "aggregate",
+        "workloads": ["filebench"],
+        "load_setting": "most_recent",
         "window_sizes": [0.4, 0.6, 0.8]
     },
     "test": {
-        "workloads": ["amrex_5_nodes_interference", "amrex_10_nodes_interference", "amrex_15_nodes_interference", "e3sm_15_nodes_interference", "macsio_15_nodes_interference"],
+        "workloads": ["amrex_5_nodes_interference", "amrex_10_nodes_interference", "amrex_15_nodes_interference", "e3sm", "h5_patterns", "macsio", "openpmd"],
         "load_setting": "most_recent",
         "window_sizes": [0.6]
     }

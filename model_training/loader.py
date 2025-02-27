@@ -10,23 +10,29 @@ import matplotlib.pyplot as plt
 import pickle
 from sklearn.preprocessing import StandardScaler
 import re
+import random
 
 
 
 
 def scale(mdt_features, ost_features, scaler=None, save_scaler=None):
     if scaler is None:
-        mdt_scaler = StandardScaler()
-        ost_scaler = StandardScaler()
-        reshape_mdt = mdt_features.reshape(-1, mdt_features.shape[-1])
-        reshape_ost = ost_features.reshape(-1, ost_features.shape[-1])
-        mdt_scaler.fit(reshape_mdt)
-        ost_scaler.fit(reshape_ost)
-        if save_scaler:
-            with open(f'{save_scaler}_mdt', 'wb') as f:
-                pickle.dump(mdt_scaler, f)
-            with open(f'{save_scaler}_ost', 'wb') as f:
-                pickle.dump(ost_scaler, f)
+        print(mdt_features)
+        print(len(mdt_features))
+        if len(mdt_features) > 0:
+            mdt_scaler = StandardScaler()
+            reshape_mdt = mdt_features.reshape(-1, mdt_features.shape[-1])
+            mdt_scaler.fit(reshape_mdt)
+            if save_scaler:
+                with open(f'{save_scaler}_mdt', 'wb') as f:
+                    pickle.dump(mdt_scaler, f)
+        if len(ost_features) > 0:
+            ost_scaler = StandardScaler()
+            reshape_ost = ost_features.reshape(-1, ost_features.shape[-1])
+            ost_scaler.fit(reshape_ost)
+            if save_scaler:
+                with open(f'{save_scaler}_ost', 'wb') as f:
+                    pickle.dump(ost_scaler, f)
         else:
             print("SCALER IS NOT SAVED AS PATH WAS NOT PROVIDED")
     else:
@@ -89,6 +95,10 @@ class MetricsDataset(Dataset):
                 for file_path in workload_dirs[workload][window_size]:
                     with open(file_path, 'r') as f:
                         samples_list = json.load(f)
+                        #if "IO500_15_nodes_3_it" in file_path:
+                        #print(f"Sampling {min(1000, len(samples_list))} samples from {file_path}")
+                        # randomly sample 10000 samples
+                        #samples_list = random.sample(samples_list, min(5000, len(samples_list)))
                     workload_data.extend(samples_list)
                 
                 if len(workload_data) == 0:
@@ -100,8 +110,10 @@ class MetricsDataset(Dataset):
                 for sample in workload_data:
                     # each sample should have a trace_features, stats_features, absolute_runtime_diff, relative_runtime_diff
                     # trace_features also has 'ost' and 'mdt'
-                    self.mdt_features.append([])
-                    self.ost_features.append([])
+                    if len(self.features['mdt_trace']) > 0 or len(self.features['stats']) > 0:
+                        self.mdt_features.append([])
+                    if len(self.features['ost_trace']) > 0 or len(self.features['stats']) > 0:
+                        self.ost_features.append([])
                     for target_device in self.devices['ost']:
                         self.ost_features[-1].append([])
                         for feature in self.features['ost_trace']:
@@ -115,23 +127,25 @@ class MetricsDataset(Dataset):
                             except:
                                 self.ost_features[-1][-1].append(0)
                         self.ost_features[-1][-1] = np.nan_to_num(self.ost_features[-1][-1], nan=0)
-                    for target_device in self.devices['mdt']:
-                        self.mdt_features[-1].append([])
-                        for feature in self.features['mdt_trace']:
-                            try:
-                                self.mdt_features[-1][-1].append(sample['trace_features']['mdt'][f'{target_device}_{feature}'])
-                            except:
-                                self.mdt_features[-1][-1].append(0)
-                        for feature in self.features['stats']:
-                            try:
-                                self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{feature}'])
-                            except:
-                                self.mdt_features[-1][-1].append(0)
-                        self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
+                    if len(self.features['mdt_trace']) > 0 or len(self.features['stats']) > 0:
+                        for target_device in self.devices['mdt']:
+                            self.mdt_features[-1].append([])
+                            for feature in self.features['mdt_trace']:
+                                try:
+                                    self.mdt_features[-1][-1].append(sample['trace_features']['mdt'][f'{target_device}_{feature}'])
+                                except:
+                                    self.mdt_features[-1][-1].append(0)
+                            for feature in self.features['stats']:
+                                try:
+                                    self.mdt_features[-1][-1].append(sample['stats_features']['mdt'][f'{target_device}_{feature}'])
+                                except:
+                                    self.mdt_features[-1][-1].append(0)
+                            self.mdt_features[-1][-1] = np.nan_to_num(self.mdt_features[-1][-1], nan=0)
                     
-
-                    self.mdt_features[-1] = np.array(self.mdt_features[-1])
-                    self.ost_features[-1] = np.array(self.ost_features[-1])
+                    if len(self.mdt_features) > 0:
+                        self.mdt_features[-1] = np.array(self.mdt_features[-1])
+                    if len(self.ost_features) > 0:
+                        self.ost_features[-1] = np.array(self.ost_features[-1])
                     self.target.append(sample['relative_runtime_diff'])
                     total_idx += 1
                     
@@ -139,8 +153,10 @@ class MetricsDataset(Dataset):
                     if self.augment:
                         for i in range(len(self.devices['ost'])-1):
                             # rotate positions of OST servers
-                            self.mdt_features.append(self.mdt_features[-1])
-                            self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
+                            if len(self.mdt_features) > 0:
+                                self.mdt_features.append(self.mdt_features[-1])
+                            if len(self.ost_features) > 0:
+                                self.ost_features.append(np.roll(self.ost_features[-1], 1, axis=0))
                             self.target.append(sample['relative_runtime_diff'])
                             total_idx += 1
                             
@@ -150,12 +166,16 @@ class MetricsDataset(Dataset):
         self.target = np.array(self.target)
         self.target = np.digitize(self.target, self.bin_thresholds)
         self.target = np.eye(self.num_bins)[self.target]
-        self.ost_features = np.array(self.ost_features)
-        self.mdt_features = np.array(self.mdt_features)
-        print(f"ost_features shape: {self.ost_features.shape}")
-        print(f"mdt_features shape: {self.mdt_features.shape}")
-        self.ost_features = np.nan_to_num(self.ost_features, nan=0)
-        self.mdt_features = np.nan_to_num(self.mdt_features, nan=0)
+        if len(self.ost_features) > 0:
+            self.ost_features = np.array(self.ost_features)
+            print(f"ost_features shape: {self.ost_features.shape}")
+            self.ost_features = np.nan_to_num(self.ost_features, nan=0)
+        if len(self.mdt_features) > 0:
+            self.mdt_features = np.array(self.mdt_features)
+            print(f"mdt_features shape: {self.mdt_features.shape}")
+            self.mdt_features = np.nan_to_num(self.mdt_features, nan=0)
+
+        
         if self.num_bins == 2:
             # if only 2 bins, then we can convert the target to a single column
             self.target = np.argmax(self.target, axis=1)
@@ -169,7 +189,7 @@ class MetricsDataset(Dataset):
         print(f"postive samples: {np.sum(self.target)}")
         print(f"negative samples: {len(self.target) - np.sum(self.target)}")
         self.ost_features, self.mdt_features, self.scaler = scale(self.mdt_features, self.ost_features, self.scaler, save_scaler='scaler' if self.train else None)
-        self.plot_data()
+        #self.plot_data()
 
     def plot_data(self):
         plt.figure()
@@ -181,7 +201,12 @@ class MetricsDataset(Dataset):
         return len(self.target)
 
     def __getitem__(self, idx):
-        return self.mdt_features[idx], self.ost_features[idx], self.target[idx]
+        if len(self.mdt_features) > 0 and len(self.ost_features) > 0:
+            return self.mdt_features[idx], self.ost_features[idx], self.target[idx]
+        elif len(self.mdt_features) > 0:
+            return self.mdt_features[idx], 0, self.target[idx]
+        elif len(self.ost_features) > 0:
+            return 0, self.ost_features[idx], self.target[idx]
 
 
 if __name__ == "__main__":
