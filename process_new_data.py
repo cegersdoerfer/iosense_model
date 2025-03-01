@@ -353,9 +353,6 @@ def create_samples(data, time_window_size, test_size, devices):
     print(f"Creating samples with time window size: {time_window_size}")
     train_samples = []
     test_samples = []
-    # minimum size is 0.2 seconds
-    if time_window_size < 0.2:
-        raise ValueError('Time window size must be at least 0.2 seconds')
     
     for interference_level in data['interference_traces']:
         for repitition in data['interference_traces'][interference_level]:
