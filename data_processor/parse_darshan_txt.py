@@ -70,9 +70,10 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     ends.append(float(parts[7]) + trace_start_time)
                     osts.append(file_ids_offsets_osts_map[id_tuple]["ost"])
                     mdt.append(file_ids_offsets_osts_map[id_tuple]["mdt"])
-                    print(f"id_tuple found: {id_tuple}")
+                    #print(f"id_tuple found: {id_tuple}")
                 else:
-                    print(f"id_tuple not found: {id_tuple}")
+                    pass
+                    #print(f"id_tuple not found: {id_tuple}")
                 continue
 
             current_api = parts[0]
@@ -111,6 +112,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             else:
                 print(f"id_tuple already exists: {id_tuple}")
 
+    print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
     if num_lines > 100 and len(operations) == 0:
         return None, None, None, file_ids_offsets_osts_map, True
 
