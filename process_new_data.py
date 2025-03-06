@@ -397,6 +397,7 @@ def create_samples(data, time_window_size, test_size, devices):
                     end_time = trace_start_time + (i + 1) * time_window_size
                     print(f"Window {i}: {pd.Timestamp.fromtimestamp(start_time)} to {pd.Timestamp.fromtimestamp(end_time)}")
                     trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
+                    print(f"trace_df_window: {trace_df_window}")
                     if len(trace_df_window) == 0:
                         continue
                     # get the same operation indices in the baseline trace
