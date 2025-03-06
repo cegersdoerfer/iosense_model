@@ -61,7 +61,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 if current_file_id in file_ids_offsets_osts_map:
                     # check if offset and size are within any of the offsets and sizes in the file_ids_offsets_osts_map[current_file_id]
                     for offset_start, offset_end in file_ids_offsets_osts_map[current_file_id]:
-                        if offset >= offset_start and offset + size <= offset_end:
+                        if offset >= offset_start and offset + int(parts[5]) <= offset_end:
                             operations.append(operation)
                             ranks.append(current_rank)
                             file_ids.append(current_file_id)
