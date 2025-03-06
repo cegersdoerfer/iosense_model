@@ -57,7 +57,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 operation = parts[2]
                 offset = int(parts[4])
                 size = int(parts[5])/1000000
-                id_tuple = (current_file_id, operation, offset, size)
+                id_tuple = (current_file_id, offset, size)
                 if id_tuple in file_ids_offsets_osts_map:
                     operations.append(operation)
                     ranks.append(current_rank)
@@ -105,7 +105,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 mdt_array[0] = 1
             osts.append(ost_array)
             mdt.append(mdt_array)
-            id_tuple = (current_file_id, operation, offset, size)
+            id_tuple = (current_file_id, offset, size)
             if id_tuple not in file_ids_offsets_osts_map:
                 file_ids_offsets_osts_map[id_tuple] = {"ost": ost_array, "mdt": mdt_array}
             else:
