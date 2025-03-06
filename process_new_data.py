@@ -258,6 +258,7 @@ def get_trace_features(trace_df_window, devices):
         trace_features['ost'][f'{ost_device}_num_write_ops'] = len(trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')])
         trace_features['ost'][f'{ost_device}_num_ops'] = trace_features['ost'][f'{ost_device}_num_read_ops'] + trace_features['ost'][f'{ost_device}_num_write_ops']
         if ost_window_runtime > 0:
+            print(f"ost_window_runtime: {ost_window_runtime}")
             trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_read_ops'] / ost_window_runtime
             trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_write_ops'] / ost_window_runtime
             trace_features['ost'][f'{ost_device}_num_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_ops'] / ost_window_runtime
@@ -269,6 +270,7 @@ def get_trace_features(trace_df_window, devices):
         trace_features['ost'][f'{ost_device}_size_write_ops'] = trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')]['size'].sum()
         trace_features['ost'][f'{ost_device}_size_ops'] = trace_features['ost'][f'{ost_device}_size_read_ops'] + trace_features['ost'][f'{ost_device}_size_write_ops']
         if ost_window_runtime > 0:
+            print(f"ost_window_runtime: {ost_window_runtime}")
             trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_read_ops'] / ost_window_runtime
             trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_write_ops'] / ost_window_runtime
             trace_features['ost'][f'{ost_device}_size_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_ops'] / ost_window_runtime
