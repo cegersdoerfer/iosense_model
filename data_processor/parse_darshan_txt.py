@@ -61,7 +61,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 
                 if current_file_id in file_ids_offsets_osts_map:
                     # check if offset and size are within any of the offsets and sizes in the file_ids_offsets_osts_map[current_file_id]
-                    print(f"current_file_id: {current_file_id}")
+                    #print(f"current_file_id: {current_file_id}")
                     for offset_tuple in file_ids_offsets_osts_map[current_file_id]:
                         if offset >= offset_tuple[0] and offset_end >= offset_tuple[0]:
                             operations.append(operation)
@@ -113,8 +113,9 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             mdt.append(mdt_array)
             if current_file_id not in file_ids_offsets_osts_map:
                 file_ids_offsets_osts_map[current_file_id] = {}
-            offset_end = offset + int(parts[5])
-            offset_tuple = (offset, offset_end)
+            offset_start = int(parts[4])
+            offset_end = offset_start + int(parts[5])
+            offset_tuple = (offset_start, offset_end)
             file_ids_offsets_osts_map[current_file_id][offset_tuple] = {"ost": ost_array, "mdt": mdt_array}
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
