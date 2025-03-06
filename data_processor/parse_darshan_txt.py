@@ -122,6 +122,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 ost_array = np.zeros(ost_width)
                 mdt_array = np.zeros(mdt_width)
                 if operation in ['read', 'write']:  
+                    print(f"parts: {parts[8:]}")
                     for ost in parts[8:]:
                         if ']' in ost:
                             ost = ost.replace(']', '')
