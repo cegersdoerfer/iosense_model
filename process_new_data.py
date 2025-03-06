@@ -59,6 +59,7 @@ def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
         darshan_df.reset_index(inplace=True)
         darshan_df = darshan_df.drop(columns=['index'])
         print("Darshan traces loaded and concatenated.")
+        print(darshan_df.head())
         return darshan_df
     else:
         print("No Darshan traces found.")
