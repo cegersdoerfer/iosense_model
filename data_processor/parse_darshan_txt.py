@@ -53,16 +53,18 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             # Check if the line has the expected number of fields
             if len(parts) < 9:
                 if len(parts) < 8:
-                    print(f"line {num_lines} has less than 8 parts: {line}")
                     continue
                 operation = parts[2]
                 offset = int(parts[4])
+                offset_end = offset + int(parts[5])
                 size = int(parts[5])/1000000
                 
                 if current_file_id in file_ids_offsets_osts_map:
                     # check if offset and size are within any of the offsets and sizes in the file_ids_offsets_osts_map[current_file_id]
+                    print(f"current_file_id: {current_file_id}")
+                    print(f"file_ids_offsets_osts_map[current_file_id]: {file_ids_offsets_osts_map[current_file_id]}")
                     for offset_start, offset_end in file_ids_offsets_osts_map[current_file_id]:
-                        if offset >= offset_start and offset + int(parts[5]) <= offset_end:
+                        if offset >= offset_start and offset_end >= offset:
                             operations.append(operation)
                             ranks.append(current_rank)
                             file_ids.append(current_file_id)
@@ -112,7 +114,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             mdt.append(mdt_array)
             if current_file_id not in file_ids_offsets_osts_map:
                 file_ids_offsets_osts_map[current_file_id] = {}
-            file_ids_offsets_osts_map[current_file_id][(offset, offset + int(parts[5]))] = {"ost": ost_array, "mdt": mdt_array}
+            offset_end = offset + int(parts[5])
+            file_ids_offsets_osts_map[current_file_id][(offset, offset_end)] = {"ost": ost_array, "mdt": mdt_array}
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
     if num_lines > 100 and len(operations) == 0:
