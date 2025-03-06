@@ -192,6 +192,7 @@ def get_data(model_config, run_txt):
                             if config_name not in configs:
                                 configs.append(config_name)
                     for config in configs:
+                        print("processing config: ", config)
                         trace_df = load_darshan_trace_from_dir(os.path.join(data_dir, workload, data_type, time_stamp_dir, interference_level, repitition), config, run_txt, devices)
                         if trace_df is None:
                             continue
@@ -464,11 +465,11 @@ def main():
         data_config['time_stamp_dir'] = get_time_stamp_dir(os.path.join(IOSENSE_ROOT, "data", data_config['workload']), data_config['time_stamp_dir'])
     data_config['cluster_config'] = load_cluster_config()
     window_sizes = data_config['window_sizes']
+    data, devices = get_data(data_config, args.run_txt)
+    print(f"Devices: {devices}")
     for window_size in window_sizes:
         data_config['time_window_size'] = window_size
         print(f"Processing window size: {window_size}")
-        data, devices = get_data(data_config, args.run_txt)
-        print(f"Devices: {devices}")
         train_samples, test_samples = create_samples(data, window_size, data_config['test_size'], devices)
         time_stamp_dir = data_config['time_stamp_dir']
         save_samples(train_samples, os.path.join(IOSENSE_ROOT, data_config['output_dir'], data_config['workload'], time_stamp_dir, f'train_samples_{window_size}.json'))
