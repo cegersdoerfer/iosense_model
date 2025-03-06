@@ -66,8 +66,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     mdt_arrays = []
                     for offset_tuple in file_ids_offsets_osts_map[current_file_id]:
                         if offset_start >= offset_tuple[0] and offset_end <= offset_tuple[1]:
-                            osts.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
-                            mdt.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["mdt"])
+                            ost_arrays.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
+                            mdt_arrays.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["mdt"])
                             break
                         elif offset_start >= offset_tuple[0] and offset_end >= offset_tuple[1]:
                             ost_arrays.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
