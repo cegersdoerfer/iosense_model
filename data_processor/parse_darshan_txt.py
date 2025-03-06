@@ -55,26 +55,44 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 if len(parts) < 8:
                     continue
                 operation = parts[2]
-                offset = int(parts[4])
-                offset_end = offset + int(parts[5])
+                offset_start = int(parts[4])
+                offset_end = offset_start + int(parts[5])
                 size = int(parts[5])/1000000
                 
                 if current_file_id in file_ids_offsets_osts_map:
                     # check if offset and size are within any of the offsets and sizes in the file_ids_offsets_osts_map[current_file_id]
                     #print(f"current_file_id: {current_file_id}")
+                    ost_arrays = []
+                    mdt_arrays = []
                     for offset_tuple in file_ids_offsets_osts_map[current_file_id]:
-                        if offset >= offset_tuple[0] and offset_end >= offset_tuple[0]:
-                            operations.append(operation)
-                            ranks.append(current_rank)
-                            file_ids.append(current_file_id)
-                            apis.append(current_api)
-                            segments.append(int(parts[3]))
-                            offsets.append(offset)
-                            sizes.append(size)
-                            starts.append(float(parts[6]) + trace_start_time)
-                            ends.append(float(parts[7]) + trace_start_time)
+                        if offset_start >= offset_tuple[0] and offset_end <= offset_tuple[1]:
                             osts.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
                             mdt.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["mdt"])
+                            break
+                        elif offset_start >= offset_tuple[0] and offset_end >= offset_tuple[1]:
+                            ost_arrays.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
+                            mdt_arrays.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["mdt"])
+                            offset_start = offset_tuple[1] + 1
+
+                    operations.append(operation)
+                    ranks.append(current_rank)
+                    file_ids.append(current_file_id)
+                    apis.append(current_api)
+                    segments.append(int(parts[3]))
+                    offsets.append(offset_start)
+                    sizes.append(size)
+                    starts.append(float(parts[6]) + trace_start_time)
+                    ends.append(float(parts[7]) + trace_start_time)
+                    osts_arrays = np.array(ost_arrays)
+                    mdt_arrays = np.array(mdt_arrays)
+                    # merge ost_arrays and mdt_arrays and set the values to 1 if the sum is greater than 0
+                    merged_osts = np.zeros(ost_width)
+                    merged_mdt = np.zeros(mdt_width)
+                    merged_osts[osts_arrays.sum(axis=0) > 0] = 1
+                    merged_mdt[mdt_arrays.sum(axis=0) > 0] = 1
+                    osts.append(merged_osts)
+                    mdt.append(merged_mdt)
+
                 else:
                     pass
                     #print(f"id_tuple not found: {id_tuple}")
