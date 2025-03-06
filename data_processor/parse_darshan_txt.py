@@ -53,6 +53,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             # Check if the line has the expected number of fields
             if len(parts) < 9:
                 if len(parts) < 8:
+                    print(f"line {num_lines} has less than 8 parts: {line}")
                     continue
                 operation = parts[2]
                 offset = int(parts[4])
