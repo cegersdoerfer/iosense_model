@@ -252,16 +252,18 @@ def get_trace_features(trace_df_window, devices):
         idle_time = ost_window_runtime - io_time if ost_window_runtime > 0 else 0
         trace_features['ost'][f'{ost_device}_idle_time'] = idle_time
         trace_features['ost'][f'{ost_device}_idle_time_percentage'] = (idle_time / ost_window_runtime * 100) if ost_window_runtime > 0 else 0
+
         
         # Existing code
         trace_features['ost'][f'{ost_device}_num_read_ops'] = len(trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'read')])
         trace_features['ost'][f'{ost_device}_num_write_ops'] = len(trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')])
         trace_features['ost'][f'{ost_device}_num_ops'] = trace_features['ost'][f'{ost_device}_num_read_ops'] + trace_features['ost'][f'{ost_device}_num_write_ops']
-        if ost_window_runtime > 0:
+        if io_time > 0:
             print(f"ost_window_runtime: {ost_window_runtime}")
-            trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_read_ops'] / ost_window_runtime
-            trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_write_ops'] / ost_window_runtime
-            trace_features['ost'][f'{ost_device}_num_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_ops'] / ost_window_runtime
+            print(f"io_time: {io_time}")
+            trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_read_ops'] / io_time
+            trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_write_ops'] / io_time
+            trace_features['ost'][f'{ost_device}_num_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_ops'] / io_time
         else:
             trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = 0
             trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = 0
@@ -269,11 +271,12 @@ def get_trace_features(trace_df_window, devices):
         trace_features['ost'][f'{ost_device}_size_read_ops'] = trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'read')]['size'].sum()
         trace_features['ost'][f'{ost_device}_size_write_ops'] = trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')]['size'].sum()
         trace_features['ost'][f'{ost_device}_size_ops'] = trace_features['ost'][f'{ost_device}_size_read_ops'] + trace_features['ost'][f'{ost_device}_size_write_ops']
-        if ost_window_runtime > 0:
+        if io_time > 0:
             print(f"ost_window_runtime: {ost_window_runtime}")
-            trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_read_ops'] / ost_window_runtime
-            trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_write_ops'] / ost_window_runtime
-            trace_features['ost'][f'{ost_device}_size_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_ops'] / ost_window_runtime
+            print(f"io_time: {io_time}")
+            trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_read_ops'] / io_time
+            trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_write_ops'] / io_time
+            trace_features['ost'][f'{ost_device}_size_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_ops'] / io_time
         else:
             trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = 0
             trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = 0
@@ -311,11 +314,11 @@ def get_trace_features(trace_df_window, devices):
         trace_features['mdt'][f'{mdt_device}_num_open_ops'] = len(trace_df_window[(trace_df_window[mdt_device] == 1) & (trace_df_window['operation'] == 'open')])
         trace_features['mdt'][f'{mdt_device}_num_close_ops'] = len(trace_df_window[(trace_df_window[mdt_device] == 1) & (trace_df_window['operation'] == 'close')])
         trace_features['mdt'][f'{mdt_device}_num_ops'] = trace_features['mdt'][f'{mdt_device}_num_stat_ops'] + trace_features['mdt'][f'{mdt_device}_num_open_ops'] + trace_features['mdt'][f'{mdt_device}_num_close_ops']
-        if mdt_window_runtime > 0:
-            trace_features['mdt'][f'{mdt_device}_num_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_ops'] / mdt_window_runtime
-            trace_features['mdt'][f'{mdt_device}_num_stat_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_stat_ops'] / mdt_window_runtime
-            trace_features['mdt'][f'{mdt_device}_num_open_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_open_ops'] / mdt_window_runtime
-            trace_features['mdt'][f'{mdt_device}_num_close_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_close_ops'] / mdt_window_runtime
+        if io_time > 0:
+            trace_features['mdt'][f'{mdt_device}_num_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_ops'] / io_time
+            trace_features['mdt'][f'{mdt_device}_num_stat_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_stat_ops'] / io_time
+            trace_features['mdt'][f'{mdt_device}_num_open_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_open_ops'] / io_time
+            trace_features['mdt'][f'{mdt_device}_num_close_ops_per_sec'] = trace_features['mdt'][f'{mdt_device}_num_close_ops'] / io_time
         else:
             trace_features['mdt'][f'{mdt_device}_num_ops_per_sec'] = 0
             trace_features['mdt'][f'{mdt_device}_num_stat_ops_per_sec'] = 0
