@@ -425,6 +425,13 @@ def get_most_recent_time_stamp_dir(data_dir):
     timestamps.sort()
     return timestamps[-1]
 
+def get_time_stamp_dir(data_dir, time_stamp_str):
+    timestamps = os.listdir(os.path.join(data_dir, 'darshan_logs'))
+    for timestamp in timestamps:
+        if time_stamp_str in timestamp:
+            return timestamp
+    raise ValueError(f"Time stamp directory {time_stamp_str} not found in {data_dir}")
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -432,7 +439,10 @@ def main():
     args = parser.parse_args()
     print("Starting main process...")
     data_config = load_data_config()
-    data_config['time_stamp_dir'] = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, "data", data_config['workload']))
+    if data_config['time_stamp_dir'] == 'most_recent':
+        data_config['time_stamp_dir'] = get_most_recent_time_stamp_dir(os.path.join(IOSENSE_ROOT, "data", data_config['workload']))
+    else:
+        data_config['time_stamp_dir'] = get_time_stamp_dir(os.path.join(IOSENSE_ROOT, "data", data_config['workload']), data_config['time_stamp_dir'])
     data_config['cluster_config'] = load_cluster_config()
     window_sizes = data_config['window_sizes']
     for window_size in window_sizes:
