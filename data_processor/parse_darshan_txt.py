@@ -85,13 +85,16 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     ends.append(float(parts[7]) + trace_start_time)
                     osts_arrays = np.array(ost_arrays)
                     mdt_arrays = np.array(mdt_arrays)
-                    # merge ost_arrays and mdt_arrays and set the values to 1 if the sum is greater than 0
-                    merged_osts = np.zeros(ost_width)
-                    merged_mdt = np.zeros(mdt_width)
-                    merged_osts[osts_arrays.sum(axis=0) > 0] = 1
-                    merged_mdt[mdt_arrays.sum(axis=0) > 0] = 1
-                    osts.append(merged_osts)
-                    mdt.append(merged_mdt)
+                    summed_osts = np.sum(osts_arrays, axis=0)
+                    summed_mdt = np.sum(mdt_arrays, axis=0)
+                    summed_osts[summed_osts > 0] = 1
+                    summed_mdt[summed_mdt > 0] = 1
+                    summed_osts = summed_osts.astype(int).reshape(1, -1)
+                    summed_mdt = summed_mdt.astype(int).reshape(1, -1)
+                    print(f"summed_osts: {summed_osts}")
+                    print(f"summed_mdt: {summed_mdt}")
+                    osts.append(summed_osts)
+                    mdt.append(summed_mdt)
 
                 else:
                     pass
