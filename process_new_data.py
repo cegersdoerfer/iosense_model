@@ -247,6 +247,8 @@ def get_trace_features(trace_df_window, devices):
                     io_time += op['end'] - current_end
                     current_end = op['end']
                 # Completely overlapping operations don't add time
+        print(f"ost_window_runtime: {ost_window_runtime}")
+        print(f"io_time: {io_time}")
         
         # Calculate idle time
         idle_time = ost_window_runtime - io_time if ost_window_runtime > 0 else 0
@@ -259,8 +261,6 @@ def get_trace_features(trace_df_window, devices):
         trace_features['ost'][f'{ost_device}_num_write_ops'] = len(trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')])
         trace_features['ost'][f'{ost_device}_num_ops'] = trace_features['ost'][f'{ost_device}_num_read_ops'] + trace_features['ost'][f'{ost_device}_num_write_ops']
         if io_time > 0:
-            print(f"ost_window_runtime: {ost_window_runtime}")
-            print(f"io_time: {io_time}")
             trace_features['ost'][f'{ost_device}_num_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_read_ops'] / io_time
             trace_features['ost'][f'{ost_device}_num_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_write_ops'] / io_time
             trace_features['ost'][f'{ost_device}_num_ops_per_sec'] = trace_features['ost'][f'{ost_device}_num_ops'] / io_time
@@ -272,8 +272,6 @@ def get_trace_features(trace_df_window, devices):
         trace_features['ost'][f'{ost_device}_size_write_ops'] = trace_df_window[(trace_df_window[ost_device] == 1) & (trace_df_window['operation'] == 'write')]['size'].sum()
         trace_features['ost'][f'{ost_device}_size_ops'] = trace_features['ost'][f'{ost_device}_size_read_ops'] + trace_features['ost'][f'{ost_device}_size_write_ops']
         if io_time > 0:
-            print(f"ost_window_runtime: {ost_window_runtime}")
-            print(f"io_time: {io_time}")
             trace_features['ost'][f'{ost_device}_size_read_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_read_ops'] / io_time
             trace_features['ost'][f'{ost_device}_size_write_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_write_ops'] / io_time
             trace_features['ost'][f'{ost_device}_size_ops_per_sec'] = trace_features['ost'][f'{ost_device}_size_ops'] / io_time
