@@ -52,6 +52,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             parts = line.split()
             # Check if the line has the expected number of fields
             if len(parts) < 9:
+                if len(parts) < 8:
+                    continue
                 operation = parts[2]
                 offset = int(parts[4])
                 size = int(parts[5])/1000000
