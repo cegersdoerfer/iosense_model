@@ -28,7 +28,9 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
 
 
     # Parse the txt output
+    num_lines = 0
     for line in txt_output.splitlines():
+        
         # Extract start time
         if line.startswith("# start_time:"):
             trace_start_time = float(line.split(':')[1].strip())
@@ -46,6 +48,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             
         # Extract IO operation details
         if not line.startswith("#") and current_file_id and current_rank:
+            num_lines += 1
             parts = line.split()
             # Check if the line has the expected number of fields
             if len(parts) < 9:
@@ -106,6 +109,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             else:
                 print(f"id_tuple already exists: {id_tuple}")
 
+    if num_lines > 100 and len(operations) == 0:
+        return None, None, None, None, True
 
     if len(osts) == 0:
         return None, trace_start_time, full_runtime
@@ -146,4 +151,4 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
     df = pd.DataFrame.from_dict(df).sort_values(by=['start'])
     df.reset_index(inplace=True)
     
-    return df, trace_start_time, full_runtime, file_ids_offsets_osts_map
+    return df, trace_start_time, full_runtime, file_ids_offsets_osts_map, False
