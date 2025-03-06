@@ -111,7 +111,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             mdt.append(mdt_array)
             if current_file_id not in file_ids_offsets_osts_map:
                 file_ids_offsets_osts_map[current_file_id] = {}
-            file_ids_offsets_osts_map[current_file_id][(offset, offset + parts[5])] = {"ost": ost_array, "mdt": mdt_array}
+            file_ids_offsets_osts_map[current_file_id][(offset, offset + int(parts[5]))] = {"ost": ost_array, "mdt": mdt_array}
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
     if num_lines > 100 and len(operations) == 0:
