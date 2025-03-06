@@ -99,6 +99,7 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     #print(f"id_tuple not found: {id_tuple}")
                 continue
             else:
+                print(f"parts: {parts}")
                 current_api = parts[0]
                 if not "POSIX" in current_api:
                     continue
