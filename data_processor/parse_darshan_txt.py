@@ -112,10 +112,10 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 print(f"id_tuple already exists: {id_tuple}")
 
     if num_lines > 100 and len(operations) == 0:
-        return None, None, None, None, True
+        return None, None, None, file_ids_offsets_osts_map, True
 
     if len(osts) == 0:
-        return None, trace_start_time, full_runtime
+        return None, trace_start_time, full_runtime, file_ids_offsets_osts_map, True
     
     osts = np.array(osts)
     mdt = np.array(mdt)
