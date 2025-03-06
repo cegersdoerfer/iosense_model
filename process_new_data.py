@@ -227,6 +227,9 @@ def get_trace_features(trace_df_window, devices):
     mdt_devices = devices['mdt']
     for ost_device in ost_devices:
         ost_device_df = trace_df_window[trace_df_window[ost_device]==1]
+        print(f"ost_device_df: {ost_device_df}")
+        print("end: ", ost_device_df['end'].max())
+        print("start: ", ost_device_df['start'].min())
         ost_window_runtime = ost_device_df['end'].max() - ost_device_df['start'].min() if len(ost_device_df) > 0 else 0
         
         # Calculate total time spent on I/O operations for this device
