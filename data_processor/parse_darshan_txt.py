@@ -57,20 +57,23 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 operation = parts[2]
                 offset = int(parts[4])
                 size = int(parts[5])/1000000
-                id_tuple = (current_file_id, offset, size)
-                if id_tuple in file_ids_offsets_osts_map:
-                    operations.append(operation)
-                    ranks.append(current_rank)
-                    file_ids.append(current_file_id)
-                    apis.append(current_api)
-                    segments.append(int(parts[3]))
-                    offsets.append(offset)
-                    sizes.append(size)
-                    starts.append(float(parts[6]) + trace_start_time)
-                    ends.append(float(parts[7]) + trace_start_time)
-                    osts.append(file_ids_offsets_osts_map[id_tuple]["ost"])
-                    mdt.append(file_ids_offsets_osts_map[id_tuple]["mdt"])
-                    #print(f"id_tuple found: {id_tuple}")
+                
+                if current_file_id in file_ids_offsets_osts_map:
+                    # check if offset and size are within any of the offsets and sizes in the file_ids_offsets_osts_map[current_file_id]
+                    for offset_start, offset_end in file_ids_offsets_osts_map[current_file_id]:
+                        if offset >= offset_start and offset + size <= offset_end:
+                            operations.append(operation)
+                            ranks.append(current_rank)
+                            file_ids.append(current_file_id)
+                            apis.append(current_api)
+                            segments.append(int(parts[3]))
+                            offsets.append(offset)
+                            sizes.append(size)
+                            starts.append(float(parts[6]) + trace_start_time)
+                            ends.append(float(parts[7]) + trace_start_time)
+                            osts.append(file_ids_offsets_osts_map[current_file_id][(offset_start, offset_end)]["ost"])
+                            mdt.append(file_ids_offsets_osts_map[current_file_id][(offset_start, offset_end)]["mdt"])
+                            print(f"found: {current_file_id} {offset_start} {offset_end} {operation}")
                 else:
                     pass
                     #print(f"id_tuple not found: {id_tuple}")
@@ -106,11 +109,9 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 mdt_array[0] = 1
             osts.append(ost_array)
             mdt.append(mdt_array)
-            id_tuple = (current_file_id, offset, size)
-            if id_tuple not in file_ids_offsets_osts_map:
-                file_ids_offsets_osts_map[id_tuple] = {"ost": ost_array, "mdt": mdt_array}
-            else:
-                print(f"id_tuple already exists: {id_tuple}")
+            if current_file_id not in file_ids_offsets_osts_map:
+                file_ids_offsets_osts_map[current_file_id] = {}
+            file_ids_offsets_osts_map[current_file_id][(offset, offset + parts[5])] = {"ost": ost_array, "mdt": mdt_array}
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
     if num_lines > 100 and len(operations) == 0:
