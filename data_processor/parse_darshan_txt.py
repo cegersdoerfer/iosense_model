@@ -97,43 +97,43 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     pass
                     #print(f"id_tuple not found: {id_tuple}")
                 continue
-
-            current_api = parts[0]
-            if not "POSIX" in current_api:
-                continue
-            operation = parts[2]
-            operations.append(operation)
-            ranks.append(current_rank)
-            file_ids.append(current_file_id)
-            apis.append(current_api)
-            segments.append(int(parts[3]))
-            if parts[4] == 'N/A':
-                offsets.append(0)
             else:
-                offsets.append(int(parts[4]))
-            if parts[5] == 'N/A':
-                sizes.append(0)
-            else:
-                sizes.append(int(parts[5])/1000000)
-            starts.append(float(parts[6]) + trace_start_time)
-            ends.append(float(parts[7]) + trace_start_time)
-            ost_array = np.zeros(ost_width)
-            mdt_array = np.zeros(mdt_width)
-            if operation in ['read', 'write']:  
-                for ost in parts[9:]:
-                    if ']' in ost:
-                        ost = ost.replace(']', '')
-                    ost_array[int(ost)] = 1
-            else:
-                mdt_array[0] = 1
-            osts.append(ost_array)
-            mdt.append(mdt_array)
-            if current_file_id not in file_ids_offsets_osts_map:
-                file_ids_offsets_osts_map[current_file_id] = {}
-            offset_start = int(parts[4])
-            offset_end = offset_start + int(parts[5])
-            offset_tuple = (offset_start, offset_end)
-            file_ids_offsets_osts_map[current_file_id][offset_tuple] = {"ost": ost_array, "mdt": mdt_array}
+                current_api = parts[0]
+                if not "POSIX" in current_api:
+                    continue
+                operation = parts[2]
+                operations.append(operation)
+                ranks.append(current_rank)
+                file_ids.append(current_file_id)
+                apis.append(current_api)
+                segments.append(int(parts[3]))
+                if parts[4] == 'N/A':
+                    offsets.append(0)
+                else:
+                    offsets.append(int(parts[4]))
+                if parts[5] == 'N/A':
+                    sizes.append(0)
+                else:
+                    sizes.append(int(parts[5])/1000000)
+                starts.append(float(parts[6]) + trace_start_time)
+                ends.append(float(parts[7]) + trace_start_time)
+                ost_array = np.zeros(ost_width)
+                mdt_array = np.zeros(mdt_width)
+                if operation in ['read', 'write']:  
+                    for ost in parts[9:]:
+                        if ']' in ost:
+                            ost = ost.replace(']', '')
+                        ost_array[int(ost)] = 1
+                else:
+                    mdt_array[0] = 1
+                osts.append(ost_array)
+                mdt.append(mdt_array)
+                if current_file_id not in file_ids_offsets_osts_map:
+                    file_ids_offsets_osts_map[current_file_id] = {}
+                offset_start = int(parts[4])
+                offset_end = offset_start + int(parts[5])
+                offset_tuple = (offset_start, offset_end)
+                file_ids_offsets_osts_map[current_file_id][offset_tuple] = {"ost": ost_array, "mdt": mdt_array}
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
     if num_lines > 100 and len(operations) == 0:
