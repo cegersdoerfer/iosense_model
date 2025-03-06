@@ -14,6 +14,7 @@ from utils.config import load_cluster_config, IOSENSE_ROOT, load_data_config
 def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
     print(f"Loading Darshan traces from {dir_path} for config {config_name}...")
     traces = []
+    file_ids_segments_offsets_map = {}
     for file in os.listdir(dir_path):
         if not run_txt:
             if file.endswith('.darshan') and config_name in file:
@@ -23,7 +24,7 @@ def load_darshan_trace_from_dir(dir_path, config_name, run_txt, devices):
                 subprocess.run(command, shell=True)
                 with open(os.path.join(dir_path, txt_file), 'r') as f:
                     darshan_txt = f.read()
-                trace_df, trace_start_time, trace_runtime = parse_darshan_txt(darshan_txt, devices)
+                trace_df, trace_start_time, trace_runtime, file_ids_segments_offsets_map = parse_darshan_txt(darshan_txt, devices, file_ids_segments_offsets_map)
                 if trace_df is not None:
                     traces.append(trace_df)
         else:

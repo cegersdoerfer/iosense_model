@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-def parse_darshan_txt(txt_output, devices):
+def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
     # Lists to store extracted data
     file_ids = []
     apis = []
@@ -25,6 +25,7 @@ def parse_darshan_txt(txt_output, devices):
     mdt_width = len(devices['mdt'])
     
     ost_width = len(devices['ost'])
+
 
     # Parse the txt output
     for line in txt_output.splitlines():
@@ -48,7 +49,27 @@ def parse_darshan_txt(txt_output, devices):
             parts = line.split()
             # Check if the line has the expected number of fields
             if len(parts) < 9:
+                operation = parts[2]
+                offset = int(parts[4])
+                size = int(parts[5])/1000000
+                id_tuple = (current_file_id, operation, offset, size)
+                if id_tuple in file_ids_offsets_osts_map:
+                    operations.append(operation)
+                    ranks.append(current_rank)
+                    file_ids.append(current_file_id)
+                    apis.append(current_api)
+                    segments.append(int(parts[3]))
+                    offsets.append(offset)
+                    sizes.append(size)
+                    starts.append(float(parts[6]) + trace_start_time)
+                    ends.append(float(parts[7]) + trace_start_time)
+                    osts.append(file_ids_offsets_osts_map[id_tuple]["ost"])
+                    mdt.append(file_ids_offsets_osts_map[id_tuple]["mdt"])
+                    print(f"id_tuple found: {id_tuple}")
+                else:
+                    print(f"id_tuple not found: {id_tuple}")
                 continue
+
             current_api = parts[0]
             if not "POSIX" in current_api:
                 continue
@@ -79,6 +100,12 @@ def parse_darshan_txt(txt_output, devices):
                 mdt_array[0] = 1
             osts.append(ost_array)
             mdt.append(mdt_array)
+            id_tuple = (current_file_id, operation, offset, size)
+            if id_tuple not in file_ids_offsets_osts_map:
+                file_ids_offsets_osts_map[id_tuple] = {"ost": ost_array, "mdt": mdt_array}
+            else:
+                print(f"id_tuple already exists: {id_tuple}")
+
 
     if len(osts) == 0:
         return None, trace_start_time, full_runtime
@@ -119,4 +146,4 @@ def parse_darshan_txt(txt_output, devices):
     df = pd.DataFrame.from_dict(df).sort_values(by=['start'])
     df.reset_index(inplace=True)
     
-    return df, trace_start_time, full_runtime
+    return df, trace_start_time, full_runtime, file_ids_offsets_osts_map
