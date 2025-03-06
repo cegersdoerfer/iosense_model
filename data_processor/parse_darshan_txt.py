@@ -140,6 +140,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 offset_start = int(parts[4])
                 offset_end = offset_start + int(parts[5])
                 offset_tuple = (offset_start, offset_end)
+                print("real ost_array: ", ost_array)
+                print("real mdt_array: ", mdt_array)
                 file_ids_offsets_osts_map[current_file_id][offset_tuple] = {"ost": ost_array, "mdt": mdt_array}
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
