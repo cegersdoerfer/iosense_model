@@ -63,8 +63,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     # check if offset and size are within any of the offsets and sizes in the file_ids_offsets_osts_map[current_file_id]
                     print(f"current_file_id: {current_file_id}")
                     print(f"file_ids_offsets_osts_map[current_file_id]: {file_ids_offsets_osts_map[current_file_id]}")
-                    for offset_start, offset_end in file_ids_offsets_osts_map[current_file_id]:
-                        if offset >= offset_start and offset_end >= offset:
+                    for offset_tuple in file_ids_offsets_osts_map[current_file_id]:
+                        if offset >= offset_tuple[0] and offset_end >= offset_tuple[0]:
                             operations.append(operation)
                             ranks.append(current_rank)
                             file_ids.append(current_file_id)
@@ -74,9 +74,9 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                             sizes.append(size)
                             starts.append(float(parts[6]) + trace_start_time)
                             ends.append(float(parts[7]) + trace_start_time)
-                            osts.append(file_ids_offsets_osts_map[current_file_id][(offset_start, offset_end)]["ost"])
-                            mdt.append(file_ids_offsets_osts_map[current_file_id][(offset_start, offset_end)]["mdt"])
-                            print(f"found: {current_file_id} {offset_start} {offset_end} {operation}")
+                            osts.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
+                            mdt.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["mdt"])
+                            print(f"found: {current_file_id} {offset_tuple} {operation}")
                 else:
                     pass
                     #print(f"id_tuple not found: {id_tuple}")
@@ -115,7 +115,11 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
             if current_file_id not in file_ids_offsets_osts_map:
                 file_ids_offsets_osts_map[current_file_id] = {}
             offset_end = offset + int(parts[5])
-            file_ids_offsets_osts_map[current_file_id][(offset, offset_end)] = {"ost": ost_array, "mdt": mdt_array}
+            offset_tuple = (offset, offset_end)
+            if offset_tuple not in file_ids_offsets_osts_map[current_file_id]:
+                file_ids_offsets_osts_map[current_file_id][offset_tuple] = {"ost": ost_array, "mdt": mdt_array}
+            else:
+                print(f"offset_tuple already exists: {offset_tuple}")
 
     print(f"num_lines: {num_lines}, len(operations): {len(operations)}")
     if num_lines > 100 and len(operations) == 0:
