@@ -120,7 +120,6 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                 ends.append(float(parts[7]) + trace_start_time)
                 ost_array = np.zeros(ost_width)
                 mdt_array = np.zeros(mdt_width)
-                print(parts[9:])
                 if operation in ['read', 'write']:  
                     for ost in parts[9:]:
                         if ']' in ost:
