@@ -75,7 +75,6 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                             ends.append(float(parts[7]) + trace_start_time)
                             osts.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["ost"])
                             mdt.append(file_ids_offsets_osts_map[current_file_id][offset_tuple]["mdt"])
-                            print(f"found: {current_file_id} {offset_tuple} {operation}")
                 else:
                     pass
                     #print(f"id_tuple not found: {id_tuple}")
