@@ -89,8 +89,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                     summed_mdt = np.sum(mdt_arrays, axis=0)
                     summed_osts[summed_osts > 0] = 1
                     summed_mdt[summed_mdt > 0] = 1
-                    summed_osts = summed_osts.astype(int).reshape(1, -1)
-                    summed_mdt = summed_mdt.astype(int).reshape(1, -1)
+                    summed_osts = summed_osts.astype(int).flatten()
+                    summed_mdt = summed_mdt.astype(int).flatten()
                     print(f"summed_osts: {summed_osts}")
                     print(f"summed_mdt: {summed_mdt}")
                     osts.append(summed_osts)
