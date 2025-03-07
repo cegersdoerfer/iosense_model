@@ -227,9 +227,6 @@ def get_trace_features(trace_df_window, devices):
     mdt_devices = devices['mdt']
     for ost_device in ost_devices:
         ost_device_df = trace_df_window[trace_df_window[ost_device]==1]
-        print(f"ost_device_df: {ost_device_df}")
-        print("end: ", ost_device_df['end'].max())
-        print("start: ", ost_device_df['start'].min())
         ost_window_runtime = ost_device_df['end'].max() - ost_device_df['start'].min() if len(ost_device_df) > 0 else 0
         
         # Calculate total time spent on I/O operations for this device
@@ -250,8 +247,6 @@ def get_trace_features(trace_df_window, devices):
                     io_time += op['end'] - current_end
                     current_end = op['end']
                 # Completely overlapping operations don't add time
-        print(f"ost_window_runtime: {ost_window_runtime}")
-        print(f"io_time: {io_time}")
         
         # Calculate idle time
         idle_time = ost_window_runtime - io_time if ost_window_runtime > 0 else 0
@@ -396,9 +391,7 @@ def create_samples(data, time_window_size, test_size, devices):
                 for i in range(num_windows):
                     start_time = trace_start_time + i * time_window_size
                     end_time = trace_start_time + (i + 1) * time_window_size
-                    print(f"Window {i}: {pd.Timestamp.fromtimestamp(start_time)} to {pd.Timestamp.fromtimestamp(end_time)}")
                     trace_df_window = trace_df[(trace_df['start'] >= start_time) & (trace_df['start'] < end_time)]
-                    print(f"trace_df_window: {trace_df_window}")
                     if len(trace_df_window) == 0:
                         continue
                     # get the same operation indices in the baseline trace
@@ -408,7 +401,6 @@ def create_samples(data, time_window_size, test_size, devices):
                     # convert start_time and end_time to pd.Timestamp
                     start_time = pd.Timestamp.fromtimestamp(start_time)
                     end_time = pd.Timestamp.fromtimestamp(end_time)
-                    print(f"start_time: {start_time}, end_time: {end_time}")
                     for device in data['stats']:
                         #print(f"min time_stamp: {data['stats'][device]['time_stamp'].min()}, max time_stamp: {data['stats'][device]['time_stamp'].max()}")
                         stats_df_window[device] = data['stats'][device][(data['stats'][device]['time_stamp'] >= start_time) & (data['stats'][device]['time_stamp'] < end_time)]
