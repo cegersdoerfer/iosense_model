@@ -126,7 +126,8 @@ def parse_darshan_txt(txt_output, devices, file_ids_offsets_osts_map=None):
                             ost = ost.replace(']', '')
                         if '[' in ost:
                             ost = ost.replace('[', '')
-                        ost_array[int(ost)] = 1
+                        if ost != '':
+                            ost_array[int(ost)] = 1
                 else:
                     mdt_array[0] = 1
                 osts.append(ost_array)
